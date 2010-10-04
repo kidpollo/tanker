@@ -12,6 +12,7 @@ class Person
 
   tankit 'persons' do
     indexes :name
+    indexes :last_name
   end
 
   def id
@@ -20,6 +21,10 @@ class Person
 
   def name
     'paco'
+  end
+
+  def last_name
+    'viramontes'
   end
 end
 
