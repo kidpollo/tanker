@@ -1,11 +1,11 @@
 require 'rubygems'
-require 'minitest/unit'
+Bundler.setup :test
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'tanker'
+require 'rspec'
 
-class MiniTest::Unit::TestCase
+Rspec.configure do |c|
+  c.mock_with :rspec
 end
-
-MiniTest::Unit.autorun
