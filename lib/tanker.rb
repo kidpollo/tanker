@@ -81,7 +81,6 @@ module Tanker
         end
       end
     end
-
     def update_tank_indexes
       hash = {}
       tanker_indexes.each do |idx|
