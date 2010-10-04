@@ -5,12 +5,12 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "tanker"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.summary = %Q{IndexTank integration to your favorite orm}
+    gem.description = %Q{IndexTank is a great search indexing service, this gem tries to make any orm keep in sync with indextank with ease}
     gem.email = "kidpollo@gmail.com"
     gem.homepage = "http://github.com/kidpollo/tanker"
     gem.authors = ["@kidpollo"]
-    gem.add_development_dependency "minitest", ">= 0"
+    gem.add_development_dependency "rspec", ">= 2.0.0.beta.22"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
