@@ -29,4 +29,4 @@ PLATFORMS
 DEPENDENCIES
   jeweler
   rspec (>= 2.0.0.beta.22)
-  will_paginate
+  will_paginate (>= 2.3.15)

@@ -48,30 +48,39 @@ module Tanker
       @tanker_indexes << field
     end
 
-  end
-
-  # these are the instace methods included que
-  module InstanceMethods
-
-    def tanker_indexes
-      self.class.tanker_indexes
-    end
-
     def api
       @api ||= IndexTank::ApiClient.new(Tanker.configuration[:url])
     end
 
     def index
-      @index ||= api.get_index(self.class.index_name)
+      @index ||= api.get_index(self.index_name)
     end
 
-    def search_tank(query, page = 1, per_page = self.class.per_page)
+    def search_tank(query, options = {})
+      page     = options.delete(:page) || 1
+      per_page = options.delete(:per_page) || self.per_page
 
-      results = index.search(query, :start => page, :len => per_page )
-      ids = results[:results].map{|res| res[:docid]}
+      # transform fields in query
+      if options.has_key? :conditions
+        options[:conditions].each do |field,value|
+          query += " #{field}:(#{value})"
+        end
+      end
+
+      query = "__any:(#{query.to_s}) __type:#{self.name}"
+      options = { :start => page - 1, :len => per_page }.merge(options)
+
+      results = index.search(query, options)
+
+      unless results[:results].empty?
+        ids = results[:results].map{|res| res[:docid].split(" ", 2)}
+      else
+        return nil
+      end
+
 
       @entries = WillPaginate::Collection.create(page, per_page) do |pager|
-        result = self.class.find(ids)
+        result = self.find(ids)
         # inject the result array into the paginated collection:
         pager.replace(result)
 
@@ -81,16 +90,36 @@ module Tanker
         end
       end
     end
+
+  end
+
+  # these are the instace methods included que
+  module InstanceMethods
+
+    def tanker_indexes
+      self.class.tanker_indexes
+    end
+
     def update_tank_indexes
-      hash = {}
-      tanker_indexes.each do |idx|
-        hash[idx] = self.send(idx.to_s)
+      data = {}
+
+      tanker_indexes.each do |field|
+        val = self.instance_eval(field.to_s)
+        data[field.to_s] = val.to_s unless val.nil?
       end
-      index.add_document(id, hash)
+
+      data[:__any] = data.values.join " . "
+      data[:__type] = self.class.name
+
+      self.class.index.add_document(it_doc_id, data)
     end
 
     def delete_tank_indexes
-      index.delete_document(id)
+      self.class.index.delete_document(it_doc_id)
+    end
+
+    def it_doc_id
+      self.class.name + ' ' + self.id.to_s
     end
 
   end

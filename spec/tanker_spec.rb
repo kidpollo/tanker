@@ -61,36 +61,30 @@ describe Tanker do
 
   describe 'tanker instance' do
     it 'should create an api instance' do
-      person = Person.new
-
-      person.api.class.should == IndexTank::ApiClient
+      Person.api.class.should == IndexTank::ApiClient
     end
 
     it 'should create a connexion to index tank' do
-      person = Person.new
-
-      person.index.class.should == IndexTank::IndexClient
+      Person.index.class.should == IndexTank::IndexClient
     end
 
     it 'should be able to perform a seach query' do
-      person = Person.new
-
-      person.index.should_receive(:search).and_return(
+      Person.index.should_receive(:search).and_return(
         {
           :matches => 1,
           :results => [{
-            :docid => 1,
+            :docid => Person.new.it_doc_id,
             :name  => 'pedro'
           }],
           :search_time => 1
         }
       )
 
-      person.class.should_receive(:find).and_return(
-      [person]
+      Person.should_receive(:find).and_return(
+      [Person.new]
       )
 
-      collection = person.search_tank('hey!')
+      collection = Person.search_tank('hey!')
       collection.class.should == WillPaginate::Collection
       collection.total_entries.should == 1
       collection.total_pages.should == 1
@@ -101,7 +95,7 @@ describe Tanker do
     it 'should be able to update the index' do
       person = Person.new
 
-      person.index.should_receive(:add_document)
+      Person.index.should_receive(:add_document)
 
       person.update_tank_indexes
     end
@@ -109,7 +103,7 @@ describe Tanker do
     it 'should be able to delete de document from the index' do
       person = Person.new
 
-      person.index.should_receive(:delete_document)
+      Person.index.should_receive(:delete_document)
 
       person.delete_tank_indexes
     end
