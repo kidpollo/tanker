@@ -1,6 +1,86 @@
-= tanker
+= Tanker - IndexTank integration to your favorite orm
 
-Description goes here.
+*Note:* This gem is still quite alpha but please feel free to send comments
+
+IndexTank is a great search indexing service, this gem tries to make 
+any orm keep in sync with indextank with ease. This gem has a simple 
+but powerful approach to integrating IndexTank to any orm. The gem 
+also supports pagination using the +will_paginate/collection+. Its dead
+simple to integrate with Rails 3 basically you just need to 
+
+There are very few things needed to integrate Tanker to any orm. 
+Basically the orm instance must respond to +id+ and any attributes 
+you wish to index.
+
+== Installation
+    gem install tanker
+
+If you are using Rails 3 its better to add Tanker to your +GEMFILE+
+
+    gem 'tanker'
+
+And run
+
+    bundle install
+
+== Initialization
+If you're using Rails, config/initializers/tanker.rb is a good place for this:
+
+    Tanker.configuration = {:url => 'http://:xxxxxxxxx@xxxxx.api.indextank.com' }
+
+You would probably want to have a fancier configuration depending on
+your environment. Be sure to copy and paste the correct url provided
+in the IndexTank Dashboard
+
+== Example
+    
+    class Topic < ActiveRecord::Base
+      acts_as_taggable
+      
+      # just include the Tanker module
+      include Tanker
+
+      # define the index by supplying the index name and the fields to index
+      tankit 'lgbt' do
+        indexes :title
+        indexes :content
+        indexes :tag_list #NOTICE this is an array of Tags! Awesome!
+      end
+      
+      # define the callbacks to update or delete the index
+      # these methods can be called whenever or wherever
+      # this varies between ORMs
+      after_save :update_tank_indexes
+      after_destroy :delete_tank_indexes
+
+      # Note! Will Paginate pagination, thanks mislav!
+      def self.per_page
+        5
+      end
+
+    end
+
+Create Topics
+
+    Topic.create(:title => 'Awesome Topic', :content => 'blah, blah', :tag_list => 'tag1, tag2')
+    Topic.create(:title => 'Bad Topic', :content => 'blah, blah', :tag_list => 'tag1')
+    Topic.create(:title => 'Cool Topic', :content => 'blah, blah', :tag_list => 'tag3, tag2')
+
+Search Topics
+
+    @topics = Topic.search_tank('Topic', :page => 1, :per_page => 10) # Gets 3 results!
+    @topics = Topic.search_tank('blah',  :conditions => {:tag_list => 'tag1'}) # Gets 2 results!
+    @topics = Topic.search_tank('blah',  :conditions => {:title => 'Awesome', :tag_list => 'tag1'}) # Gets 1 result!
+
+Paginate Results
+
+    <% will_paginate(@topics) %>
+
+
+== TODO
+* Rake Tasks to update the index.
+* Documentation
+* More fancy stuff (Suggestions?)
 
 == Note on Patches/Pull Requests
  
@@ -11,6 +91,18 @@ Description goes here.
 * Commit, do not mess with rakefile, version, or history.
   (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
+
+
+== Acknowledgements
+The gem is based on a couple of projects:
+
+*{redis-textsearch}[http://github.com/nateware/redis-textsearch]
+*{mongomapper}[http://github.com/jnunemaker/mongomapper]
+*{thinkingtank}[http://github.com/flaptor/thinkingtank]
+*{will_paginate}[http://github.com/mislav/will_paginate]
+
+Kudos to this awesome projects and developers
+
 
 == Copyright
 
