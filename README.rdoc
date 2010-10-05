@@ -5,8 +5,7 @@
 IndexTank is a great search indexing service, this gem tries to make 
 any orm keep in sync with indextank with ease. This gem has a simple 
 but powerful approach to integrating IndexTank to any orm. The gem 
-also supports pagination using the +will_paginate/collection+. Its dead
-simple to integrate with Rails 3 basically you just need to 
+also supports pagination using the +will_paginate/collection+.
 
 There are very few things needed to integrate Tanker to any orm. 
 Basically the orm instance must respond to +id+ and any attributes 
