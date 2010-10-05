@@ -41,7 +41,7 @@ in the IndexTank Dashboard
       include Tanker
 
       # define the index by supplying the index name and the fields to index
-      tankit 'lgbt' do
+      tankit 'my_index' do
         indexes :title
         indexes :content
         indexes :tag_list #NOTICE this is an array of Tags! Awesome!
