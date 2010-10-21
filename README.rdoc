@@ -25,6 +25,10 @@ And run
 == Initialization
 If you're using Rails, config/initializers/tanker.rb is a good place for this:
 
+    YourAppName::Application.config.index_tank_url = 'http://:xxxxxxxxx@xxxxx.api.indextank.com'
+
+If you are not using rails you can put this somewhere before you load your modesl
+
     Tanker.configuration = {:url => 'http://:xxxxxxxxx@xxxxx.api.indextank.com' }
 
 You would probably want to have a fancier configuration depending on
@@ -40,6 +44,9 @@ in the IndexTank Dashboard
       include Tanker
 
       # define the index by supplying the index name and the fields to index
+      # this is the index name you create in the Index Tank dashboard
+      # you can use the same index for various models Tanker can handle
+      # indexing searching on different models with a single Index Tank index
       tankit 'my_index' do
         indexes :title
         indexes :content
@@ -75,9 +82,23 @@ Paginate Results
 
     <% will_paginate(@topics) %>
 
+== Reindex your data
+
+If you are using rails 3 there are of couple of rake tasks included in your project
+
+    rake tanker:clear_indexes
+
+This task deletes all your indexes and recreates empty indexes, if you have not created
+the indexes in the Index Tank interface this task creates them for you provided
+you have enough indexes in your account.
+
+    rake tanker:reindex
+    
+This task re-indexes all the your models that have the Tanker module included.
+Usually you will only need a single Index Tank index but if you want to separate
+your indexes please use different index names in the tankit method call in your models
 
 == TODO
-* Rake Tasks to update the index.
 * Documentation
 * More fancy stuff (Suggestions?)
 
