@@ -1,33 +1,5 @@
 require 'spec_helper'
 
-Tanker.configuration = {:url => 'http://api.indextank.com'}
-
-class Dummy
-
-end
-
-
-class Person
-  include Tanker
-
-  tankit 'persons' do
-    indexes :name
-    indexes :last_name
-  end
-
-  def id
-    1
-  end
-
-  def name
-    'paco'
-  end
-
-  def last_name
-    'viramontes'
-  end
-end
-
 describe Tanker do
 
   it 'sets configuration' do
@@ -66,7 +38,7 @@ describe Tanker do
 
   describe 'tanker instance' do
     it 'should create an api instance' do
-      Person.api.class.should == IndexTank::ApiClient
+      Tanker.api.class.should == IndexTank::ApiClient
     end
 
     it 'should create a connexion to index tank' do

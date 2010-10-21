@@ -1,11 +1,17 @@
 require "rubygems"
 require "bundler"
-require 'indextank_client'
-
-require 'tanker/configuration'
-require 'will_paginate/collection'
 
 Bundler.setup :default
+
+require 'indextank_client'
+require 'tanker/configuration'
+require 'tanker/utilities'
+require 'will_paginate/collection'
+
+
+if defined? Rails
+  require 'tanker/railtie'
+end
 
 module Tanker
 
@@ -13,11 +19,20 @@ module Tanker
   class NoBlockGiven < StandardError; end
 
   autoload :Configuration, 'tanker/configuration'
-
   extend Configuration
 
   class << self
+    attr_reader :included_in
+
+    def api
+      @api ||= IndexTank::ApiClient.new(Tanker.configuration[:url])
+    end
+
     def included(klass)
+      @included_in ||= []
+      @included_in << klass
+      @included_in.uniq!
+
       klass.instance_variable_set('@tanker_configuration', configuration)
       klass.instance_variable_set('@tanker_indexes', [])
       klass.send :include, InstanceMethods
@@ -48,12 +63,8 @@ module Tanker
       @tanker_indexes << field
     end
 
-    def api
-      @api ||= IndexTank::ApiClient.new(Tanker.configuration[:url])
-    end
-
     def index
-      @index ||= api.get_index(self.index_name)
+      @index ||= Tanker.api.get_index(self.index_name)
     end
 
     def search_tank(query, options = {})
@@ -93,13 +104,14 @@ module Tanker
 
   end
 
-  # these are the instace methods included que
+  # these are the instance methods included
   module InstanceMethods
 
     def tanker_indexes
       self.class.tanker_indexes
     end
 
+    # update a create instance from index tank
     def update_tank_indexes
       data = {}
 
@@ -114,10 +126,12 @@ module Tanker
       self.class.index.add_document(it_doc_id, data)
     end
 
+    # delete instance from index tank
     def delete_tank_indexes
       self.class.index.delete_document(it_doc_id)
     end
 
+    # create a unique index based on the model name and unique id
     def it_doc_id
       self.class.name + ' ' + self.id.to_s
     end
