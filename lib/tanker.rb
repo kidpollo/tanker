@@ -79,14 +79,14 @@ module Tanker
       end
 
       query = "__any:(#{query.to_s}) __type:#{self.name}"
-      options = { :start => page - 1, :len => per_page }.merge(options)
+      options = { :start => per_page * page, :len => per_page }.merge(options)
 
       results = index.search(query, options)
 
-      unless results["results"].empty?
-        ids = results["results"].map{|res| res["docid"].split(" ", 2)[1]}
+      ids = unless results["results"].empty?
+        results["results"].map{|res| res["docid"].split(" ", 2)[1]}
       else
-        return nil
+        []
       end
 
       @entries = WillPaginate::Collection.create(page, per_page) do |pager|
