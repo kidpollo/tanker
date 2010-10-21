@@ -41,7 +41,6 @@ module Tanker
       class << klass
         define_method(:per_page) { 10 } unless respond_to?(:per_page)
       end
-
     end
   end
 
@@ -68,6 +67,7 @@ module Tanker
     end
 
     def search_tank(query, options = {})
+      ids      = []
       page     = options.delete(:page) || 1
       per_page = options.delete(:per_page) || self.per_page
 
@@ -83,12 +83,11 @@ module Tanker
 
       results = index.search(query, options)
 
-      unless results[:results].empty?
-        ids = results[:results].map{|res| res[:docid].split(" ", 2)}
+      unless results["results"].empty?
+        ids = results["results"].map{|res| res["docid"].split(" ", 2)[1]}
       else
         return nil
       end
-
 
       @entries = WillPaginate::Collection.create(page, per_page) do |pager|
         result = self.find(ids)
@@ -97,7 +96,7 @@ module Tanker
 
         unless pager.total_entries
           # the pager didn't manage to guess the total count, do it manually
-          pager.total_entries = results[:matches]
+          pager.total_entries = results["matches"]
         end
       end
     end
@@ -135,6 +134,6 @@ module Tanker
     def it_doc_id
       self.class.name + ' ' + self.id.to_s
     end
-
   end
 end
+

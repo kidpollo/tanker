@@ -48,12 +48,12 @@ describe Tanker do
     it 'should be able to perform a seach query' do
       Person.index.should_receive(:search).and_return(
         {
-          :matches => 1,
-          :results => [{
-            :docid => Person.new.it_doc_id,
-            :name  => 'pedro'
+          "matches" => 1,
+          "results" => [{
+            "docid" => Person.new.it_doc_id,
+            "name"  => 'pedro'
           }],
-          :search_time => 1
+          "search_time" => 1
         }
       )
 

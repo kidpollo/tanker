@@ -4,7 +4,7 @@ module Tanker
   class Railtie < Rails::Railtie
     config.index_tank_url = ''
 
-    initializer "tanker.initializating", :after => :load_application_initializers do |app|
+    config.after_initialize do
       Tanker.configuration = {:url => config.index_tank_url }
     end
 
