@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["@kidpollo"]
-  s.date = %q{2010-10-21}
+  s.date = %q{2010-10-22}
   s.description = %q{IndexTank is a great search indexing service, this gem tries to make any orm keep in sync with indextank with ease}
   s.email = %q{kidpollo@gmail.com}
   s.extra_rdoc_files = [
