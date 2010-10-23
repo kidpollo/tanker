@@ -79,8 +79,7 @@ module Tanker
       end
 
       query = "__any:(#{query.to_s}) __type:#{self.name}"
-      options = { :start => per_page * page, :len => per_page }.merge(options)
-
+      options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
       results = index.search(query, options)
 
       ids = unless results["results"].empty?
@@ -136,4 +135,3 @@ module Tanker
     end
   end
 end
-
