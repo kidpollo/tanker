@@ -10,13 +10,13 @@ module IndexTank
     class RestClient
         def GET(path, params={})
             path = "#{path}?#{to_query(params)}" if params
-            request = Net::HTTP::Get.new "#{@uri}#{path}"
+            request = Net::HTTP::Get.new "#{@uri.path}#{path}"
             authorize request
             return execute(request)
         end
 
         def PUT(path, body={})
-            request = Net::HTTP::Put.new "#{@uri}#{path}"
+            request = Net::HTTP::Put.new "#{@uri.path}#{path}"
             authorize request
             request.body = body.to_json if body
             return execute(request)
@@ -24,7 +24,7 @@ module IndexTank
 
         def DELETE(path, params={})
             path = "#{path}?#{to_query(params)}" if params
-            request = Net::HTTP::Delete.new "#{@uri}#{path}"
+            request = Net::HTTP::Delete.new "#{@uri.path}#{path}"
             authorize request
             return execute(request)
         end
