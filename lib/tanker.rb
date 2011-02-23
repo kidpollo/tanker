@@ -83,7 +83,7 @@ module Tanker
       results = index.search(query, options)
 
       ids = unless results["results"].empty?
-        results["results"].map{|res| res["docid"].split(" ", 2)[1]}
+        results["results"].map{ |res| res["docid"].split(" ", 2)[1].to_i }
       else
         []
       end
