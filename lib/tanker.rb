@@ -58,8 +58,8 @@ module Tanker
       end
     end
 
-    def indexes(field)
-      @tanker_indexes << field
+    def indexes(field, &block)
+      @tanker_indexes << [field, block].flatten
     end
 
     def index
@@ -113,8 +113,8 @@ module Tanker
     def update_tank_indexes
       data = {}
 
-      tanker_indexes.each do |field|
-        val = self.instance_eval(field.to_s)
+      tanker_indexes.each do |field, block|
+        val = block ? block.call(self) : self.instance_eval(field.to_s)
         data[field.to_s] = val.to_s unless val.nil?
       end
 

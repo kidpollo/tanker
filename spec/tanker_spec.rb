@@ -36,6 +36,19 @@ describe Tanker do
     dummy_instance.tanker_indexes.include?(:field).should == true
   end
 
+  it 'should allow blocks for indexable field data' do
+    Tanker.configuration = {:url => 'http://api.indextank.com'}
+    Dummy.send(:include, Tanker)
+    Dummy.send(:tankit, 'dummy index') do
+      indexes :class_name do |dummy|
+        dummy.class.name
+      end
+    end
+
+    dummy_instance = Dummy.new
+    dummy_instance.tanker_indexes.include?(:class_name).should == true
+  end
+
   describe 'tanker instance' do
     it 'should create an api instance' do
       Tanker.api.class.should == IndexTank::ApiClient
