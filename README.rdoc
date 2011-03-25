@@ -39,6 +39,7 @@ in the IndexTank Dashboard
     
     class Topic < ActiveRecord::Base
       acts_as_taggable
+      has_many :authors
       
       # just include the Tanker module
       include Tanker
@@ -51,6 +52,10 @@ in the IndexTank Dashboard
         indexes :title
         indexes :content
         indexes :tag_list #NOTICE this is an array of Tags! Awesome!
+        # you may also dynamically retrieve field data
+        indexes :author_names do |topic|
+          topic.authors.map {|author| author.name }
+        end
       end
       
       # define the callbacks to update or delete the index
