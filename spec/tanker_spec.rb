@@ -91,7 +91,8 @@ describe Tanker do
           :__any     => 'Name . Last Name',
           :__type    => 'Person',
           :name      => 'Name',
-          :last_name => 'Last Name'
+          :last_name => 'Last Name',
+          :timestamp => $frozen_moment.to_i
         },
         {
           :variables => [1.0, 20.0, 300.0]

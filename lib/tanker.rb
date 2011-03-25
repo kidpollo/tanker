@@ -128,6 +128,11 @@ module Tanker
     def update_tank_indexes
       data, options = {}, {}
 
+      # attempt to autodetect timestamp
+      if respond_to?(:created_at)
+        data[:timestamp] = created_at.to_i
+      end
+
       tanker_indexes.each do |field, block|
         val = block ? block.call(self) : self.instance_eval(field.to_s)
         data[field.to_s] = val.to_s unless val.nil?

@@ -16,6 +16,8 @@ class Dummy
 
 end
 
+$frozen_moment = Time.now
+
 class Person
   include Tanker
 
@@ -27,6 +29,10 @@ class Person
        1 => 20.0,
        2 => 300.0}
     end
+  end
+
+  def created_at
+    $frozen_moment
   end
 
   def id
