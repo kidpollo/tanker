@@ -1,8 +1,12 @@
-require "rubygems"
-require "bundler"
 
-Bundler.setup :default
+begin
+  require "rubygems"
+  require "bundler"
 
+  Bundler.setup :default
+rescue => e
+  puts "Tanker: #{e.message}"
+end
 require 'indextank_client'
 require 'tanker/configuration'
 require 'tanker/utilities'
@@ -10,7 +14,10 @@ require 'will_paginate/collection'
 
 
 if defined? Rails
-  require 'tanker/railtie'
+  begin
+    require 'tanker/railtie'
+  rescue LoadError
+  end
 end
 
 module Tanker
