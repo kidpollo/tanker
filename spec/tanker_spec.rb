@@ -83,9 +83,15 @@ describe Tanker do
     end
 
     it 'should be able to update the index' do
-      person = Person.new
+      person = Person.new(:name => 'Name', :last_name => 'Last Name')
 
-      Person.index.should_receive(:add_document)
+      Person.index.should_receive(:add_document).with(
+        Person.new.it_doc_id,
+        {:__any     => 'Name . Last Name',
+         :__type    => 'Person',
+         :name      => 'Name',
+         :last_name => 'Last Name'}
+      )
 
       person.update_tank_indexes
     end
