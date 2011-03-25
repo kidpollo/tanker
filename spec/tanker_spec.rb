@@ -87,10 +87,15 @@ describe Tanker do
 
       Person.index.should_receive(:add_document).with(
         Person.new.it_doc_id,
-        {:__any     => 'Name . Last Name',
-         :__type    => 'Person',
-         :name      => 'Name',
-         :last_name => 'Last Name'}
+        {
+          :__any     => 'Name . Last Name',
+          :__type    => 'Person',
+          :name      => 'Name',
+          :last_name => 'Last Name'
+        },
+        {
+          :variables => [1.0, 20.0, 300.0]
+        }
       )
 
       person.update_tank_indexes

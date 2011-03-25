@@ -52,9 +52,19 @@ in the IndexTank Dashboard
         indexes :title
         indexes :content
         indexes :tag_list #NOTICE this is an array of Tags! Awesome!
+
         # you may also dynamically retrieve field data
         indexes :author_names do |topic|
           topic.authors.map {|author| author.name }
+        end
+
+        # to pass in a list of variables with your document,
+        # supply a hash with the variable integers as keys:
+        variables do |topic|
+          {
+            0 => topic.popularity, # these will be available in your queries
+            1 => topic.id          # as doc.var[0] and doc.var[1]
+          }
         end
       end
       

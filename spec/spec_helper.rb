@@ -22,6 +22,11 @@ class Person
   tankit 'people' do
     indexes :name
     indexes :last_name
+    variables do
+      {0 => 1.0,
+       1 => 20.0,
+       2 => 300.0}
+    end
   end
 
   def id

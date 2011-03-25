@@ -47,7 +47,7 @@ module Tanker
   # these are the class methods added when Tanker is included
   module ClassMethods
 
-    attr_reader :tanker_indexes, :index_name
+    attr_reader :tanker_indexes, :tanker_variables, :index_name
 
     def tankit(name, &block)
       if block_given?
@@ -60,6 +60,10 @@ module Tanker
 
     def indexes(field, &block)
       @tanker_indexes << [field, block].flatten
+    end
+
+    def variables(&block)
+      @tanker_variables = block
     end
 
     def index
@@ -109,19 +113,27 @@ module Tanker
       self.class.tanker_indexes
     end
 
+    def tanker_variables
+      self.class.tanker_variables
+    end
+
     # update a create instance from index tank
     def update_tank_indexes
-      data = {}
+      data, options = {}, {}
 
       tanker_indexes.each do |field, block|
         val = block ? block.call(self) : self.instance_eval(field.to_s)
         data[field.to_s] = val.to_s unless val.nil?
       end
 
+      if tanker_variables
+        options[:variables] = tanker_variables.call(self)
+      end
+
       data[:__any] = data.values.join " . "
       data[:__type] = self.class.name
 
-      self.class.index.add_document(it_doc_id, data)
+      self.class.index.add_document(it_doc_id, data, options)
     end
 
     # delete instance from index tank
