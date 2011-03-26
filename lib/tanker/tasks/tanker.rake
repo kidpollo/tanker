@@ -2,7 +2,7 @@ namespace :tanker do
  
   desc "Reindex all models"
   task :reindex => :environment do
-    puts "reinexing all models"
+    puts "reindexing all models"
     load_models
     Tanker::Utilities.reindex_all_models
   end
