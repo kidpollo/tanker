@@ -49,6 +49,16 @@ module Tanker
         define_method(:per_page) { 10 } unless respond_to?(:per_page)
       end
     end
+
+    def batch_update(records)
+      return false if records.empty?
+      data = records.map do |record|
+        options = record.tanker_index_options
+        options.merge!( :docid => record.it_doc_id, :fields => record.tanker_index_data )
+        options
+      end
+      records.first.class.index.add_documents(data)
+    end
   end
 
   # these are the class methods added when Tanker is included
@@ -110,7 +120,6 @@ module Tanker
         end
       end
     end
-
   end
 
   # these are the instance methods included
@@ -126,7 +135,18 @@ module Tanker
 
     # update a create instance from index tank
     def update_tank_indexes
-      data, options = {}, {}
+      self.class.index.add_document(
+        it_doc_id, tanker_index_data, tanker_index_options
+      )
+    end
+
+    # delete instance from index tank
+    def delete_tank_indexes
+      self.class.index.delete_document(it_doc_id)
+    end
+
+    def tanker_index_data
+      data = {}
 
       # attempt to autodetect timestamp
       if respond_to?(:created_at)
@@ -145,12 +165,17 @@ module Tanker
       data[:__any] = data.values.join " . "
       data[:__type] = self.class.name
 
-      self.class.index.add_document(it_doc_id, data, options)
+      data
     end
 
-    # delete instance from index tank
-    def delete_tank_indexes
-      self.class.index.delete_document(it_doc_id)
+    def tanker_index_options
+      options = {}
+
+      if tanker_variables
+        options[:variables] = tanker_variables.call(self)
+      end
+
+      options
     end
 
     # create a unique index based on the model name and unique id

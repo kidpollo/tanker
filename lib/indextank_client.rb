@@ -139,6 +139,11 @@ module IndexTank
             return r
         end
 
+        def add_documents(data_array)
+            code, r = PUT "/docs", data_array
+            return r
+        end
+
         def update_variables(docid, variables, options={})
             options.merge!( :docid => docid, :variables => variables )
             code, r = PUT "/docs/variables", options

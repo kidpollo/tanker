@@ -33,8 +33,18 @@ module Tanker
       def reindex_all_models
         get_model_classes.each do |klass|
           puts "Indexing #{klass.to_s} model"
-          klass.all.each do |model_instance|
-            model_instance.update_tank_indexes
+          batches = []
+          all = klass.all
+          total_records = all.size
+          # group into batches of 50
+          batch_size = 50
+          all.each_with_index do |model_instance, idx|
+            batch_num = idx / batch_size
+            (batches[batch_num] ||= []) << model_instance
+          end
+          batches.each_with_index do |batch, idx|
+            Tanker.batch_update(batch)
+            puts "Indexed #{batch.size} records   #{(idx+1) * batch_size}/#{total_records}"
           end
         end
       end

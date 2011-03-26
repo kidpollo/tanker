@@ -102,6 +102,27 @@ describe Tanker do
       person.update_tank_indexes
     end
 
+    it 'should be able to batch update the index' do
+      person = Person.new(:name => 'Name', :last_name => 'Last Name')
+
+      Person.index.should_receive(:add_documents).with(
+        [ Person.new.it_doc_id,
+          {
+            :__any     => 'Name . Last Name',
+            :__type    => 'Person',
+            :name      => 'Name',
+            :last_name => 'Last Name',
+            :timestamp => $frozen_moment.to_i
+          },
+          {
+            :variables => [1.0, 20.0, 300.0]
+          }
+        ]
+      )
+
+      Tanker.batch_update[person]
+    end
+
     it 'should be able to delete de document from the index' do
       person = Person.new
 
