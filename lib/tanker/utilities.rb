@@ -32,7 +32,7 @@ module Tanker
 
       def reindex_all_models
         get_model_classes.each do |klass|
-          puts "Indexing #{klass.to_s} model"
+          puts "Indexing #{klass} model"
           batches = []
           all = klass.all
           total_records = all.size
@@ -42,10 +42,12 @@ module Tanker
             batch_num = idx / batch_size
             (batches[batch_num] ||= []) << model_instance
           end
+          timer = Time.now
           batches.each_with_index do |batch, idx|
             Tanker.batch_update(batch)
             puts "Indexed #{batch.size} records   #{(idx+1) * batch_size}/#{total_records}"
           end
+          puts "Indexed #{total_records} #{klass} records in #{Time.now - timer} seconds"
         end
       end
     end
