@@ -155,6 +155,7 @@ module Tanker
 
       tanker_indexes.each do |field, block|
         val = block ? block.call(self) : self.instance_eval(field.to_s)
+        val = val.join(' ') if Array === val
         data[field.to_s] = val.to_s unless val.nil?
       end
 
