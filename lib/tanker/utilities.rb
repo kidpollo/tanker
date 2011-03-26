@@ -47,7 +47,7 @@ module Tanker
           timer = Time.now
           batches.each_with_index do |batch, idx|
             Tanker.batch_update(batch)
-            puts "Indexed #{batch.size} records   #{(idx+1) * batch_size}/#{total_records}"
+            puts "Indexed #{batch.size} records   #{(idx * batch_size) + batch.size}/#{total_records}"
           end
           puts "Indexed #{total_records} #{klass} records in #{Time.now - timer} seconds"
         end
