@@ -79,7 +79,7 @@ module Tanker
       @tanker_indexes << [field, block].flatten
     end
 
-    def variables(&block)
+    def index_variables(&block)
       @tanker_variables = block
     end
 
