@@ -93,8 +93,8 @@ module Tanker
       per_page = options.delete(:per_page) || self.per_page
 
       # transform fields in query
-      if options.has_key? :conditions
-        options[:conditions].each do |field,value|
+      if conditions = options.delete(:conditions)
+        conditions.each do |field,value|
           query += " #{field}:(#{value})"
         end
       end
