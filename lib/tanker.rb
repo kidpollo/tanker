@@ -165,10 +165,6 @@ module Tanker
         data[field.to_s] = val.to_s unless val.nil?
       end
 
-      if tanker_variables
-        options[:variables] = tanker_variables.call(self)
-      end
-
       data[:__any] = data.values.join " . "
       data[:__type] = self.class.name
 
