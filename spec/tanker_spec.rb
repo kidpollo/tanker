@@ -88,14 +88,18 @@ describe Tanker do
       Person.index.should_receive(:add_document).with(
         Person.new.it_doc_id,
         {
-          :__any     => 'Name . Last Name',
+          :__any     => "Last Name . #{$frozen_moment.to_i} . Name",
           :__type    => 'Person',
           :name      => 'Name',
           :last_name => 'Last Name',
           :timestamp => $frozen_moment.to_i
         },
         {
-          :variables => [1.0, 20.0, 300.0]
+          :variables => {
+            0 => 1.0,
+            1 => 20.0,
+            2 => 300.0
+          }
         }
       )
 
@@ -106,21 +110,24 @@ describe Tanker do
       person = Person.new(:name => 'Name', :last_name => 'Last Name')
 
       Person.index.should_receive(:add_documents).with(
-        [ Person.new.it_doc_id,
-          {
-            :__any     => 'Name . Last Name',
-            :__type    => 'Person',
-            :name      => 'Name',
-            :last_name => 'Last Name',
-            :timestamp => $frozen_moment.to_i
-          },
-          {
-            :variables => [1.0, 20.0, 300.0]
-          }
-        ]
+        [ {
+            :docid => Person.new.it_doc_id,
+            :fields => {
+              :__any     => "Last Name . #{$frozen_moment.to_i} . Name",
+              :__type    => 'Person',
+              :name      => 'Name',
+              :last_name => 'Last Name',
+              :timestamp => $frozen_moment.to_i
+            },
+            :variables => {
+              0 => 1.0,
+              1 => 20.0,
+              2 => 300.0
+            }
+        } ]
       )
 
-      Tanker.batch_update[person]
+      Tanker.batch_update([person])
     end
 
     it 'should be able to delete de document from the index' do
