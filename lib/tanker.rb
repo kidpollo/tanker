@@ -89,8 +89,8 @@ module Tanker
 
     def search_tank(query, options = {})
       ids      = []
-      page     = options.delete(:page).to_i || 1
-      per_page = options.delete(:per_page).to_i || self.per_page
+      page     = (options.delete(:page) || 1).to_i
+      per_page = (options.delete(:per_page) || self.per_page).to_i
 
       # transform fields in query
       if conditions = options.delete(:conditions)
