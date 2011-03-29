@@ -95,7 +95,13 @@ module Tanker
       # transform fields in query
       if conditions = options.delete(:conditions)
         conditions.each do |field,value|
-          query += " #{field}:(#{value})"
+          if value.is_a?(Array)
+            value.each do |item|
+              query += " #{field}:(#{item})"
+            end
+          else
+            query += " #{field}:(#{value})"
+          end
         end
       end
 
