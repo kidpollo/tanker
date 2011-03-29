@@ -33,7 +33,7 @@ describe Tanker do
     end
 
     dummy_instance = Dummy.new
-    dummy_instance.tanker_indexes.include?(:field).should == true
+    dummy_instance.tanker_indexes.any? {|field, block| field == :field }.should == true
   end
 
   it 'should allow blocks for indexable field data' do
@@ -46,7 +46,7 @@ describe Tanker do
     end
 
     dummy_instance = Dummy.new
-    dummy_instance.tanker_indexes.include?(:class_name).should == true
+    dummy_instance.tanker_indexes.any? {|field, block| field == :class_name }.should == true
   end
 
   describe 'tanker instance' do
