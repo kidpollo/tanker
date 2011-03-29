@@ -19,6 +19,15 @@ end
 $frozen_moment = Time.now
 
 class Person
+
+  attr_accessor :name, :last_name
+
+  def initialize(attrs = {})
+    attrs.each {|k,v| self.send "#{k}=", v }
+    self.name ||= 'paco'
+    self.last_name ||= 'viramontes'
+  end
+
   include Tanker
 
   tankit 'people' do
@@ -37,14 +46,6 @@ class Person
 
   def id
     1
-  end
-
-  def name
-    'paco'
-  end
-
-  def last_name
-    'viramontes'
   end
 end
 
