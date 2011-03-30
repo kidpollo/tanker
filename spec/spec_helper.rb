@@ -50,6 +50,11 @@ class Person
 end
 
 class Dog
+  attr_accessor :name, :id
+  def initialize(attrs = {})
+    attrs.each {|k,v| self.send "#{k}=", v }
+  end
+
   include Tanker
 
   tankit 'animals' do
@@ -59,6 +64,11 @@ class Dog
 end
 
 class Cat
+  attr_accessor :name, :id
+  def initialize(attrs = {})
+    attrs.each {|k,v| self.send "#{k}=", v }
+  end
+
   include Tanker
 
   tankit 'animals' do

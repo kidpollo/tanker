@@ -58,7 +58,7 @@ describe Tanker do
       Person.index.class.should == IndexTank::IndexClient
     end
 
-    it 'should be able to perform a seach query' do
+    it 'should be able to perform a seach query directly on the model' do
       Person.index.should_receive(:search).and_return(
         {
           "matches" => 1,
@@ -77,6 +77,39 @@ describe Tanker do
       collection = Person.search_tank('hey!')
       collection.class.should == WillPaginate::Collection
       collection.total_entries.should == 1
+      collection.total_pages.should == 1
+      collection.per_page.should == 10
+      collection.current_page.should == 1
+    end
+
+    it 'should be able to perform a seach query over several models' do
+      index = Tanker.api.get_index('animals')
+      Dog.should_receive(:index).and_return(index)
+      index.should_receive(:search).and_return(
+        {
+          "matches" => 2,
+          "results" => [{
+            "docid" => 'Dog 7',
+            "name"  => 'fido'
+          },
+          {
+            "docid" => 'Cat 9',
+            "name"  => 'fluffy'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Dog.should_receive(:find).and_return(
+        [Dog.new(:name => 'fido', :id => 7)]
+      )
+      Cat.should_receive(:find).and_return(
+        [Cat.new(:name => 'fluffy', :id => 9)]
+      )
+
+      collection = Tanker.search([Dog, Cat], 'hey!')
+      collection.class.should == WillPaginate::Collection
+      collection.total_entries.should == 2
       collection.total_pages.should == 1
       collection.per_page.should == 10
       collection.current_page.should == 1

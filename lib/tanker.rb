@@ -59,6 +59,82 @@ module Tanker
       end
       records.first.class.index.add_documents(data)
     end
+
+    def search(models, query, options = {})
+      ids      = []
+      models   = [models].flatten.uniq
+      page     = (options.delete(:page) || 1).to_i
+      per_page = (options.delete(:per_page) || models.first.per_page).to_i
+      index    = models.first.index
+
+      if (index_names = models.map(&:index_name).uniq).size > 1
+        raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
+      end
+
+
+      # transform fields in query
+      if conditions = options.delete(:conditions)
+        conditions.each do |field,value|
+          if value.is_a?(Array)
+            value.each do |item|
+              query += " #{field}:(#{item})"
+            end
+          else
+            query += " #{field}:(#{value})"
+          end
+        end
+      end
+
+      query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).join(' OR ')})"
+      options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
+      results = index.search(query, options)
+
+      @entries = WillPaginate::Collection.create(page, per_page) do |pager|
+        # inject the result array into the paginated collection:
+        pager.replace instantiate_results(results)
+
+        unless pager.total_entries
+          # the pager didn't manage to guess the total count, do it manually
+          pager.total_entries = results["matches"]
+        end
+      end
+    end
+
+    protected
+
+      def instantiate_results(index_result)
+        results = index_result['results']
+        return [] if results.empty?
+
+        id_map = results.inject({}) do |acc, result|
+          model, id = result["docid"].split(" ", 2)
+          acc[model] ||= []
+          acc[model] << id.to_i
+          acc
+        end
+
+        if 1 == id_map.size # check for simple case, just one model involved
+          klass = constantize(id_map.keys.first)
+          # eager-load and return just this model's records
+          klass.find(id_map.values.flatten)
+        else # complex case, multiple models involved
+          id_map.each do |klass, ids|
+            # replace the id list with an eager-loaded list of records for this model
+            id_map[klass] = constantize(klass).find(ids)
+          end
+          # return them in order
+          results.map do |result|
+            model, id = result["docid"].split(" ", 2)
+            id_map[model].detect {|record| id.to_i == record.id }
+          end
+        end
+      end
+
+      def constantize(klass_name)
+        Object.const_defined?(klass_name) ?
+                  Object.const_get(klass_name) :
+                  Object.const_missing(klass_name)
+      end
   end
 
   # these are the class methods added when Tanker is included
@@ -88,43 +164,7 @@ module Tanker
     end
 
     def search_tank(query, options = {})
-      ids      = []
-      page     = (options.delete(:page) || 1).to_i
-      per_page = (options.delete(:per_page) || self.per_page).to_i
-
-      # transform fields in query
-      if conditions = options.delete(:conditions)
-        conditions.each do |field,value|
-          if value.is_a?(Array)
-            value.each do |item|
-              query += " #{field}:(#{item})"
-            end
-          else
-            query += " #{field}:(#{value})"
-          end
-        end
-      end
-
-      query = "__any:(#{query.to_s}) __type:#{self.name}"
-      options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
-      results = index.search(query, options)
-
-      ids = unless results["results"].empty?
-        results["results"].map{ |res| res["docid"].split(" ", 2)[1].to_i }
-      else
-        []
-      end
-
-      @entries = WillPaginate::Collection.create(page, per_page) do |pager|
-        result = self.find(ids)
-        # inject the result array into the paginated collection:
-        pager.replace(result)
-
-        unless pager.total_entries
-          # the pager didn't manage to guess the total count, do it manually
-          pager.total_entries = results["matches"]
-        end
-      end
+      Tanker.search([self], query, options)
     end
   end
 
