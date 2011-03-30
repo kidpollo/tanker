@@ -33,20 +33,20 @@ describe Tanker do
     end
 
     dummy_instance = Dummy.new
-    dummy_instance.tanker_indexes.any? {|field, block| field == :field }.should == true
+    dummy_instance.tanker_config.indexes.any? {|field, block| field == :field }.should == true
   end
 
   it 'should allow blocks for indexable field data' do
     Tanker.configuration = {:url => 'http://api.indextank.com'}
     Dummy.send(:include, Tanker)
     Dummy.send(:tankit, 'dummy index') do
-      indexes :class_name do |dummy|
+      indexes :class_name do
         dummy.class.name
       end
     end
 
     dummy_instance = Dummy.new
-    dummy_instance.tanker_indexes.any? {|field, block| field == :class_name }.should == true
+    dummy_instance.tanker_config.indexes.any? {|field, block| field == :class_name }.should == true
   end
 
   describe 'tanker instance' do
@@ -55,11 +55,11 @@ describe Tanker do
     end
 
     it 'should create a connexion to index tank' do
-      Person.index.class.should == IndexTank::IndexClient
+      Person.tanker_index.class.should == IndexTank::IndexClient
     end
 
     it 'should be able to perform a seach query directly on the model' do
-      Person.index.should_receive(:search).and_return(
+      Person.tanker_index.should_receive(:search).and_return(
         {
           "matches" => 1,
           "results" => [{
@@ -83,7 +83,7 @@ describe Tanker do
     end
 
     it 'should be able to use multi-value query phrases' do
-      Person.index.should_receive(:search).with(
+      Person.tanker_index.should_receive(:search).with(
         "__any:(hey! location_id:(1) location_id:(2)) __type:(Person)",
         {:start => 0, :len => 10}
       ).and_return({'results' => [], 'matches' => 0})
@@ -93,7 +93,7 @@ describe Tanker do
 
     it 'should be able to perform a seach query over several models' do
       index = Tanker.api.get_index('animals')
-      Dog.should_receive(:index).and_return(index)
+      Dog.should_receive(:tanker_index).and_return(index)
       index.should_receive(:search).and_return(
         {
           "matches" => 2,
@@ -127,7 +127,7 @@ describe Tanker do
     it 'should be able to update the index' do
       person = Person.new(:name => 'Name', :last_name => 'Last Name')
 
-      Person.index.should_receive(:add_document).with(
+      Person.tanker_index.should_receive(:add_document).with(
         Person.new.it_doc_id,
         {
           :__any     => "Last Name . #{$frozen_moment.to_i} . Name",
@@ -151,7 +151,7 @@ describe Tanker do
     it 'should be able to batch update the index' do
       person = Person.new(:name => 'Name', :last_name => 'Last Name')
 
-      Person.index.should_receive(:add_documents).with(
+      Person.tanker_index.should_receive(:add_documents).with(
         [ {
             :docid => Person.new.it_doc_id,
             :fields => {
@@ -175,7 +175,7 @@ describe Tanker do
     it 'should be able to delete the document from the index' do
       person = Person.new
 
-      Person.index.should_receive(:delete_document)
+      Person.tanker_index.should_receive(:delete_document)
 
       person.delete_tank_indexes
     end

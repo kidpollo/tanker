@@ -40,8 +40,7 @@ module Tanker
       @included_in << klass
       @included_in.uniq!
 
-      klass.instance_variable_set('@tanker_configuration', configuration)
-      klass.instance_variable_set('@tanker_indexes', [])
+      configuration # raises error if not defined
       klass.send :include, InstanceMethods
       klass.extend ClassMethods
 
@@ -57,7 +56,7 @@ module Tanker
         options.merge!( :docid => record.it_doc_id, :fields => record.tanker_index_data )
         options
       end
-      records.first.class.index.add_documents(data)
+      records.first.class.tanker_index.add_documents(data)
     end
 
     def search(models, query, options = {})
@@ -65,9 +64,9 @@ module Tanker
       models   = [models].flatten.uniq
       page     = (options.delete(:page) || 1).to_i
       per_page = (options.delete(:per_page) || models.first.per_page).to_i
-      index    = models.first.index
+      index    = models.first.tanker_index
 
-      if (index_names = models.map(&:index_name).uniq).size > 1
+      if (index_names = models.map(&:tanker_config).map(&:index_name).uniq).size > 1
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
       end
 
@@ -135,57 +134,79 @@ module Tanker
   end
 
   # these are the class methods added when Tanker is included
+  # They're kept to a minimum to prevent namespace pollution
   module ClassMethods
 
-    attr_reader :tanker_indexes, :tanker_variables, :index_name
+    attr_accessor :tanker_config
 
     def tankit(name, &block)
       if block_given?
-        @index_name = name
-        self.instance_exec(&block)
+        self.tanker_config = ModelConfig.new(name, block)
       else
         raise(NoBlockGiven, 'Please provide a block')
       end
     end
 
-    def indexes(field, &block)
-      @tanker_indexes << [field, block].flatten
-    end
-
-    def index_variables(&block)
-      @tanker_variables = block
-    end
-
-    def index
-      @index ||= Tanker.api.get_index(self.index_name)
-    end
-
     def search_tank(query, options = {})
       Tanker.search([self], query, options)
     end
+
+    def tanker_index
+      tanker_config.index
+    end
+  end
+
+  class ModelConfig
+    attr_reader :indexes, :variables, :index_name
+
+    def initialize(index_name, block)
+      @index_name = index_name
+      @indexes = []
+      @variables = []
+      instance_exec &block
+    end
+
+    def indexes(field = nil, &block)
+      @indexes << [field, block] if field
+      @indexes
+    end
+
+    def variables(&block)
+      @variables = block if block
+      @variables
+    end
+
+    def index
+      @index ||= Tanker.api.get_index(index_name)
+    end
+
   end
 
   # these are the instance methods included
   module InstanceMethods
 
+    def tanker_config
+      self.class.tanker_config
+    end
+
     def tanker_indexes
-      self.class.tanker_indexes
+      tanker_config.indexes
     end
 
     def tanker_variables
-      self.class.tanker_variables
+      tanker_config.variables
     end
 
     # update a create instance from index tank
     def update_tank_indexes
-      self.class.index.add_document(
+      tanker_config.index.add_document(
         it_doc_id, tanker_index_data, tanker_index_options
       )
     end
 
     # delete instance from index tank
     def delete_tank_indexes
-      self.class.index.delete_document(it_doc_id)
+      tanker_config.index.delete_document(it_doc_id)
     end
 
     def tanker_index_data
@@ -197,7 +218,7 @@ module Tanker
       end
 
       tanker_indexes.each do |field, block|
-        val = block ? block.call(self) : self.instance_eval(field.to_s)
+        val = block ? instance_exec(&block) : send(field)
         val = val.join(' ') if Array === val
         data[field.to_sym] = val.to_s unless val.nil?
       end
@@ -212,7 +233,7 @@ module Tanker
       options = {}
 
       if tanker_variables
-        options[:variables] = tanker_variables.call(self)
+        options[:variables] = instance_exec(&tanker_variables)
       end
 
       options
