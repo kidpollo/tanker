@@ -133,7 +133,11 @@ To reindex just one class rather than all the classes in your application just c
 
 And if you'd like to specify a custom number of records to PUT with each call to indextank.com you may specify it as the first argument:
 
-    Model.tanker_reindex(1000) # defaults to batch size of 200
+    Model.tanker_reindex(:batch_size => 1000) # defaults to batch size of 200
+
+Or you can restrict indexing to a subset of records. This is particularly helpful for massive datasets where only a small portion of the records is useful.
+
+    Model.tanker_reindex(:batch_size => 1000, :scope => :not_deleted) # will call Model.not_deleted.all internally
 
 
 == TODO

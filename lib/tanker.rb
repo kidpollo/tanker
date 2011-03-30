@@ -155,23 +155,25 @@ module Tanker
       tanker_config.index
     end
 
-    def tanker_reindex(batch_size = 200)
+    def tanker_reindex(options = {})
       puts "Indexing #{self} model"
 
       batches = []
-      total_records = all.size
+      options[:batch_size] ||= 200
+      records = options[:scope] ? send(options[:scope]).all : all
+      record_size = records.size
 
-      all.each_with_index do |model_instance, idx|
-        batch_num = idx / batch_size
+      records.each_with_index do |model_instance, idx|
+        batch_num = idx / options[:batch_size]
         (batches[batch_num] ||= []) << model_instance
       end
 
       timer = Time.now
       batches.each_with_index do |batch, idx|
         Tanker.batch_update(batch)
-        puts "Indexed #{batch.size} records   #{(idx * batch_size) + batch.size}/#{total_records}"
+        puts "Indexed #{batch.size} records   #{(idx * options[:batch_size]) + batch.size}/#{record_size}"
       end
-      puts "Indexed #{total_records} #{self} records in #{Time.now - timer} seconds"
+      puts "Indexed #{record_size} #{self} records in #{Time.now - timer} seconds"
     end
   end
 
