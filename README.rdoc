@@ -103,6 +103,10 @@ Search with negative conditions
     @topics = Topic.search_tank('keyword',  :conditions => {'tag_list' => 'tag1'}) # Gets 1 result!
     @topics = Topic.search_tank('keyword',  :conditions => {'-id' => [5,9]}) # Ignores documents with ids of '5' or '9'
 
+Search with query variables
+
+    @topics = Topic.search_tank('keyword',  :variables => {0 => 5.6}) # Makes q[0] available server-side as 5.6
+
 Paginate Results
 
     <% will_paginate(@topics) %>
@@ -122,6 +126,15 @@ you have enough indexes in your account.
 This task re-indexes all the your models that have the Tanker module included.
 Usually you will only need a single Index Tank index but if you want to separate
 your indexes please use different index names in the tankit method call in your models
+
+To reindex just one class rather than all the classes in your application just call:
+
+    Model.tanker_reindex
+
+And if you'd like to specify a custom number of records to PUT with each call to indextank.com you may specify it as the first argument:
+
+    Model.tanker_reindex(1000) # defaults to batch size of 200
+
 
 == TODO
 * Documentation
