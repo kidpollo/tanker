@@ -65,6 +65,7 @@ module Tanker
       page     = (options.delete(:page) || 1).to_i
       per_page = (options.delete(:per_page) || models.first.per_page).to_i
       index    = models.first.tanker_index
+      query    = query.join(' ') if Array === query
 
       if (index_names = models.map(&:tanker_config).map(&:index_name).uniq).size > 1
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
@@ -74,7 +75,7 @@ module Tanker
       # transform fields in query
       if conditions = options.delete(:conditions)
         conditions.each do |field, value|
-          value = [value].flatten
+          value = [value].flatten.compact
           value.each do |item|
             query += " #{field}:(#{item})"
           end
