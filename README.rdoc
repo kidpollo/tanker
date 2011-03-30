@@ -51,6 +51,7 @@ in the IndexTank Dashboard
       tankit 'my_index' do
         indexes :title
         indexes :content
+        indexes :id
         indexes :tag_list #NOTICE this is an array of Tags! Awesome!
 
         # you may also dynamically retrieve field data
@@ -62,8 +63,8 @@ in the IndexTank Dashboard
         # supply a hash with the variable integers as keys:
         variables do
           {
-            0 => popularity, # these will be available in your queries
-            1 => id          # as doc.var[0] and doc.var[1]
+            0 => authors.first.id, # these will be available in your queries
+            1 => id                # as doc.var[0] and doc.var[1]
           }
         end
       end
@@ -92,6 +93,15 @@ Search Topics
     @topics = Topic.search_tank('Topic', :page => 1, :per_page => 10) # Gets 3 results!
     @topics = Topic.search_tank('blah',  :conditions => {:tag_list => 'tag1'}) # Gets 2 results!
     @topics = Topic.search_tank('blah',  :conditions => {:title => 'Awesome', :tag_list => 'tag1'}) # Gets 1 result!
+
+Search multiple models
+
+    @results = Tanker.search([Topic, Post], 'blah') # Gets any Topic OR Post results that match!
+
+Search with negative conditions
+
+    @topics = Topic.search_tank('keyword',  :conditions => {'tag_list' => 'tag1'}) # Gets 1 result!
+    @topics = Topic.search_tank('keyword',  :conditions => {'-id' => [5,9]}) # Ignores documents with ids of '5' or '9'
 
 Paginate Results
 
