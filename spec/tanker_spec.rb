@@ -163,7 +163,7 @@ describe Tanker do
       Tanker.batch_update([person])
     end
 
-    it 'should be able to delete de document from the index' do
+    it 'should be able to delete the document from the index' do
       person = Person.new
 
       Person.index.should_receive(:delete_document)
