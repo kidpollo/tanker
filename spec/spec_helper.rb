@@ -33,7 +33,7 @@ class Person
   tankit 'people' do
     indexes :name
     indexes :last_name
-    index_variables do
+    variables do
       {0 => 1.0,
        1 => 20.0,
        2 => 300.0}
