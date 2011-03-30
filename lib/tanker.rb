@@ -162,7 +162,6 @@ module Tanker
     def initialize(index_name, block)
       @index_name = index_name
       @indexes = []
-      @variables = []
       instance_exec &block
     end
 
@@ -186,7 +185,7 @@ module Tanker
   module InstanceMethods
 
     def tanker_config
-      self.class.tanker_config
+      self.class.tanker_config || raise(NotConfigured, "Please configure Tanker for #{self.class.inspect} with the 'tankit' block")
     end
 
     def tanker_indexes
