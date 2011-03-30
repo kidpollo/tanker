@@ -41,7 +41,7 @@ describe Tanker do
     Dummy.send(:include, Tanker)
     Dummy.send(:tankit, 'dummy index') do
       indexes :class_name do
-        dummy.class.name
+        self.class.name
       end
     end
 
