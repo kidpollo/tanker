@@ -6,7 +6,7 @@ module Tanker
       end
 
       def get_available_indexes
-        get_model_classes.map{|model| model.index_name}.uniq.compact
+        get_model_classes.map{|model| model.tanker_config.index_name}.uniq.compact
       end
 
       def clear_all_indexes
