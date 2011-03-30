@@ -222,7 +222,7 @@ module Tanker
         data[field.to_sym] = val.to_s unless val.nil?
       end
 
-      data[:__any] = data.values.join " . "
+      data[:__any] = data.values.sort_by{|v| v.to_s}.join " . "
       data[:__type] = self.class.name
 
       data

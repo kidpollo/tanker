@@ -130,7 +130,7 @@ describe Tanker do
       Person.tanker_index.should_receive(:add_document).with(
         Person.new.it_doc_id,
         {
-          :__any     => "Last Name . #{$frozen_moment.to_i} . Name",
+          :__any     => "#{$frozen_moment.to_i} . Last Name . Name",
           :__type    => 'Person',
           :name      => 'Name',
           :last_name => 'Last Name',
@@ -155,7 +155,7 @@ describe Tanker do
         [ {
             :docid => Person.new.it_doc_id,
             :fields => {
-              :__any     => "Last Name . #{$frozen_moment.to_i} . Name",
+              :__any     => "#{$frozen_moment.to_i} . Last Name . Name",
               :__type    => 'Person',
               :name      => 'Name',
               :last_name => 'Last Name',
