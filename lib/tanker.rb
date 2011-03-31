@@ -179,11 +179,12 @@ module Tanker
   end
 
   class ModelConfig
-    attr_reader :indexes, :variables, :index_name
+    attr_reader :index_name
 
     def initialize(index_name, block)
       @index_name = index_name
-      @indexes = []
+      @indexes    = []
+      @functions  = {}
       instance_exec &block
     end
 
@@ -195,6 +196,11 @@ module Tanker
     def variables(&block)
       @variables = block if block
       @variables
+    end
+
+    def functions(&block)
+      @functions = block.call if block
+      @functions
     end
 
     def index

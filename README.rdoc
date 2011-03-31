@@ -67,6 +67,16 @@ in the IndexTank Dashboard
             1 => id                # as doc.var[0] and doc.var[1]
           }
         end
+
+        # You may defined some server-side functions that can be
+        # referenced in your queries. They're always referenced by
+        # their integer key:
+        functions do
+          {
+            1 => '-age',
+            2 => 'doc.var[0] - doc.var[1]'
+          }
+        end
       end
       
       # define the callbacks to update or delete the index
