@@ -72,13 +72,22 @@ module Tanker
       end
 
 
-      # transform fields in query
+      # move conditions into the query body
       if conditions = options.delete(:conditions)
         conditions.each do |field, value|
           value = [value].flatten.compact
           value.each do |item|
             query += " #{field}:(#{item})"
           end
+        end
+      end
+
+      # rephrase filter_functions
+      if filter_functions = options.delete(:filter_functions)
+        filter_functions.each do |function_number, ranges|
+          options[:"filter_function#{function_number}"] = ranges.map do |range|
+            range.join(':')
+          end.join(',')
         end
       end
 

@@ -91,6 +91,21 @@ describe Tanker do
       collection = Person.search_tank('hey!', :conditions => {:location_id => [1,2]})
     end
 
+    it 'should be able to use filter_functions' do
+      Person.tanker_index.should_receive(:search).with(
+        "__any:(hey!) __type:(Person)",
+        { :start => 0,
+          :len => 10,
+          :filter_function2 => "0:10,20:40"
+        }
+      ).and_return({'results' => [], 'matches' => 0})
+
+      collection = Person.search_tank('hey!',
+                                      :filter_functions => {
+                                        2 => [[0,10], [20,40]]
+                                      })
+    end
+
     it 'should be able to perform a seach query over several models' do
       index = Tanker.api.get_index('animals')
       Dog.should_receive(:tanker_index).and_return(index)
