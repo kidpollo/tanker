@@ -113,11 +113,71 @@ Search with negative conditions
 
 Search with query variables
 
-    @topics = Topic.search_tank('keyword',  :variables => {0 => 5.6}) # Makes q[0] available server-side as 5.6
+    @topics = Topic.search_tank('keyword',  :variables => {0 => 5.6}) # Makes 5.6 available server-side as q[0]
 
 Paginate Results
 
     <% will_paginate(@topics) %>
+
+== Geographic Search Example
+
+IndexTank and the Tanker gem support native geographic calculations. All you need is to define two document variables with your latitude and your longitude
+ 
+    class Restaurant < ActiveRecord::Base
+      include Tanker
+
+      tankit 'my_index' do
+        indexes :name
+
+        # You may define lat/lng at any variable number you like, as long
+        # as you refer to them consistently with the same integers
+        variables do
+          {
+            0 => lat
+            1 => lng
+          }
+        end
+
+        functions do
+          {
+            # This function is good for sorting your results. It will
+            # rank relevant, close results higher and irrelevant, distant results lower
+            1 => "relevance / miles(d[0], d[1], q[0], q[1])",
+
+            # This function is useful for limiting the results that your query returns.
+            # It just calculates the distance of each document in miles, which you can use
+            # in your query. Notice that we're using 0 and 1 consistently as 'lat' and 'lng'
+            2 => "miles(d[0], d[1], q[0], q[1])"
+          }
+        end
+      end
+    end
+    
+    # When searching, you need to provide a latitude and longitude in the query so that
+    # these variables are accessible on the server.
+    Restaurant.search("tasty",
+                      :var0 => 47.689948,
+                      :var1 => -122.363684,
+                      # And we'll return all results sorted by distance
+                      :function => 1)
+
+    # Or we can use just function 2 to return results in the default order, while
+    # limiting the total results to just those within 50 miles from our lat/lng:
+    Restaurant.search("tasty",
+                      :var0 => 47.689948,
+                      :var1 => -122.363684,
+                      # the following is a fancy way of saying "return all results where
+                      the result of function 2 is at least anything and less than 50"
+                      :filter_functions => {2 => [['*', 50]]})
+    # And we can combine these two function calls to return only results within 50 miles
+    # and sort them by relevance / distance:
+    Restaurant.search("tasty",
+                      :var0 => 47.689948,
+                      :var1 => -122.363684,
+                      :function => 1,
+                      :filter_functions => {2 => [['*', 50]]})
+
+
 
 == Reindex your data
 
