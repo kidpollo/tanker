@@ -85,9 +85,14 @@ module Tanker
       # rephrase filter_functions
       if filter_functions = options.delete(:filter_functions)
         filter_functions.each do |function_number, ranges|
-          options[:"filter_function#{function_number}"] = ranges.map do |range|
-            range.join(':')
-          end.join(',')
+          options[:"filter_function#{function_number}"] = ranges.map{|r|r.join(':')}.join(',')
+        end
+      end
+
+      # rephrase filter_docvars
+      if filter_docvars = options.delete(:filter_docvars)
+        filter_docvars.each do |var_number, ranges|
+          options[:"filter_docvar#{var_number}"] = ranges.map{|r|r.join(':')}.join(',')
         end
       end
 
