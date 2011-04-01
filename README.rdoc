@@ -1,7 +1,5 @@
 = Tanker - IndexTank integration to your favorite orm
 
-*Note:* This gem is still quite alpha but please feel free to send comments
-
 IndexTank is a great search indexing service, this gem tries to make 
 any orm keep in sync with indextank with ease. This gem has a simple 
 but powerful approach to integrating IndexTank to any orm. The gem 
