@@ -190,6 +190,10 @@ the indexes in the Index Tank interface this task creates them for you provided
 you have enough indexes in your account.
 
     rake tanker:reindex
+
+This task pushes any functions you've defined in your tankit() blocks to indextank.com
+
+    rake tanker:functions
     
 This task re-indexes all the your models that have the Tanker module included.
 Usually you will only need a single Index Tank index but if you want to separate
