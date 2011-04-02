@@ -10,8 +10,8 @@ begin
     gem.email = "kidpollo@gmail.com"
     gem.homepage = "http://github.com/kidpollo/tanker"
     gem.authors = ["@kidpollo", "Jack Danger Canty"]
-    gem.add_development_dependency "rspec", ">= 2.0.0.beta.22"
-    gem.add_dependency 'will_paginate', '>= 2.3.15'
+    #gem.add_development_dependency "rspec", ">= 2.0.0.beta.22"
+    #gem.add_dependency 'will_paginate', '>= 2.3.15'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
@@ -40,7 +40,7 @@ rescue LoadError
   end
 end
 
-task :test => :check_dependencies
+#task :test => :check_dependencies
 
 task :default => :test
 
