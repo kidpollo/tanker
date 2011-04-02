@@ -1,12 +1,12 @@
 = Tanker - IndexTank integration to your favorite orm
 
-IndexTank is a great search indexing service, this gem tries to make 
-any orm keep in sync with indextank with ease. This gem has a simple 
-but powerful approach to integrating IndexTank to any orm. The gem 
-also supports pagination using the +will_paginate/collection+.
+IndexTank is a great search indexing service, this gem tries to make
+that any orm stays in sync with IndexTank easily. It has a simple
+yet powerful approach to integrate IndexTank with any orm and
+also supports pagination using +will_paginate/collection+.
 
-There are very few things needed to integrate Tanker to any orm. 
-Basically the orm instance must respond to +id+ and any attributes 
+Very little is needed to make it work,
+basically, all you need is that the orm instance respond to +id+ and any attributes
 you wish to index.
 
 == Installation
@@ -29,9 +29,9 @@ If you are not using rails you can put this somewhere before you load your modes
 
     Tanker.configuration = {:url => 'http://:xxxxxxxxx@xxxxx.api.indextank.com' }
 
-You would probably want to have a fancier configuration depending on
+You would probably want to have fancier configuration depending on
 your environment. Be sure to copy and paste the correct url provided
-in the IndexTank Dashboard
+by the IndexTank Dashboard
 
 == Example
     
@@ -187,7 +187,7 @@ If you are using rails 3 there are of couple of rake tasks included in your proj
 
 This task deletes all your indexes and recreates empty indexes, if you have not created
 the indexes in the Index Tank interface this task creates them for you provided
-you have enough indexes in your account.
+you have enough available indexes in your account.
 
     rake tanker:reindex
 
