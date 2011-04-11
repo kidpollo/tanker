@@ -63,8 +63,10 @@ describe Tanker do
         {
           "matches" => 1,
           "results" => [{
-            "docid" => Person.new.it_doc_id,
-            "name"  => 'pedro'
+            "docid"  => Person.new.it_doc_id,
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
           }],
           "search_time" => 1
         }
@@ -85,7 +87,7 @@ describe Tanker do
     it 'should be able to use multi-value query phrases' do
       Person.tanker_index.should_receive(:search).with(
         "__any:(hey! location_id:(1) location_id:(2)) __type:(Person)",
-        {:start => 0, :len => 10}
+        {:start => 0, :len => 10, :fetch => "__type,__id"}
       ).and_return({'results' => [], 'matches' => 0})
 
       collection = Person.search_tank('hey!', :conditions => {:location_id => [1,2]})
@@ -96,7 +98,8 @@ describe Tanker do
         "__any:(hey!) __type:(Person)",
         { :start => 0,
           :len => 10,
-          :filter_function2 => "0:10,20:40"
+          :filter_function2 => "0:10,20:40",
+          :fetch => "__type,__id"
         }
       ).and_return({'results' => [], 'matches' => 0})
 
@@ -110,7 +113,8 @@ describe Tanker do
         "__any:(hey!) __type:(Person)",
         { :start => 0,
           :len => 10,
-          :filter_docvar3 => "*:7,80:100"
+          :filter_docvar3 => "*:7,80:100",
+          :fetch => "__type,__id"
         }
       ).and_return({'results' => [], 'matches' => 0})
 
@@ -127,12 +131,16 @@ describe Tanker do
         {
           "matches" => 2,
           "results" => [{
-            "docid" => 'Dog 7',
-            "name"  => 'fido'
+            "docid"  => 'Dog 7',
+            "name"   => 'fido',
+            "__type" => 'Dog',
+            "__id"   => '7'
           },
           {
-            "docid" => 'Cat 9',
-            "name"  => 'fluffy'
+            "docid"  => 'Cat 9',
+            "name"   => 'fluffy',
+            "__type" => 'Cat',
+            "__id"   => '9'
           }],
           "search_time" => 1
         }

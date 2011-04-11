@@ -71,7 +71,6 @@ module Tanker
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
       end
 
-
       # move conditions into the query body
       if conditions = options.delete(:conditions)
         conditions.each do |field, value|
@@ -96,6 +95,8 @@ module Tanker
         end
       end
 
+      options[:fetch] = "__type,__id"
+
       query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).join(' OR ')})"
       options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
       results = index.search(query, options)
@@ -118,7 +119,7 @@ module Tanker
         return [] if results.empty?
 
         id_map = results.inject({}) do |acc, result|
-          model, id = result["docid"].split(" ", 2)
+          model, id = result["__type"], result["__id"]
           acc[model] ||= []
           acc[model] << id.to_i
           acc
@@ -135,7 +136,7 @@ module Tanker
           end
           # return them in order
           results.map do |result|
-            model, id = result["docid"].split(" ", 2)
+            model, id = result["__type"], result["__id"]
             id_map[model].detect {|record| id.to_i == record.id }
           end
         end
