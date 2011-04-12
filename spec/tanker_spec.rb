@@ -169,6 +169,7 @@ describe Tanker do
         {
           :__any     => "#{$frozen_moment.to_i} . Last Name . Name",
           :__type    => 'Person',
+          :__id      => 1,
           :name      => 'Name',
           :last_name => 'Last Name',
           :timestamp => $frozen_moment.to_i
@@ -194,6 +195,7 @@ describe Tanker do
             :fields => {
               :__any     => "#{$frozen_moment.to_i} . Last Name . Name",
               :__type    => 'Person',
+              :__id      => 1,
               :name      => 'Name',
               :last_name => 'Last Name',
               :timestamp => $frozen_moment.to_i
