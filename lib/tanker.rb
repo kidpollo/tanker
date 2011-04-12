@@ -125,20 +125,14 @@ module Tanker
           acc
         end
 
-        if 1 == id_map.size # check for simple case, just one model involved
-          klass = constantize(id_map.keys.first)
-          # eager-load and return just this model's records
-          klass.find(id_map.values.flatten)
-        else # complex case, multiple models involved
-          id_map.each do |klass, ids|
-            # replace the id list with an eager-loaded list of records for this model
-            id_map[klass] = constantize(klass).find(ids)
-          end
-          # return them in order
-          results.map do |result|
-            model, id = result["__type"], result["__id"]
-            id_map[model].detect {|record| id.to_i == record.id }
-          end
+        id_map.each do |klass, ids|
+          # replace the id list with an eager-loaded list of records for this model
+          id_map[klass] = constantize(klass).find(ids)
+        end
+        # return them in order
+        results.map do |result|
+          model, id = result["__type"], result["__id"]
+          id_map[model].detect {|record| id.to_i == record.id }
         end
       end
 
