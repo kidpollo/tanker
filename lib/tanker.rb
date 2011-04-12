@@ -273,6 +273,7 @@ module Tanker
 
       data[:__any] = data.values.sort_by{|v| v.to_s}.join " . "
       data[:__type] = self.class.name
+      data[:__id] = self.id
 
       data
     end
