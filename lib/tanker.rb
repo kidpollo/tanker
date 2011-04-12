@@ -119,7 +119,8 @@ module Tanker
         return [] if results.empty?
 
         id_map = results.inject({}) do |acc, result|
-          model, id = result["__type"], result["__id"]
+          model = result["__type"]
+          id = constantize(model).tanker_parse_doc_id(result)
           acc[model] ||= []
           acc[model] << id.to_i
           acc
@@ -136,7 +137,8 @@ module Tanker
           end
           # return them in order
           results.map do |result|
-            model, id = result["__type"], result["__id"]
+            model = result["__type"]
+            id = constantize(model).tanker_parse_doc_id(result)
             id_map[model].detect {|record| id.to_i == record.id }
           end
         end
@@ -190,6 +192,10 @@ module Tanker
         puts "Indexed #{batch.size} records   #{(idx * options[:batch_size]) + batch.size}/#{record_size}"
       end
       puts "Indexed #{record_size} #{self} records in #{Time.now - timer} seconds"
+    end
+
+    def tanker_parse_doc_id(result)
+      result['docid'].split(' ').last
     end
   end
 
