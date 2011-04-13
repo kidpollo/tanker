@@ -12,10 +12,6 @@ end
 
 Tanker.configuration = {:url => 'http://api.indextank.com'}
 
-class Dummy
-
-end
-
 $frozen_moment = Time.now
 
 class Person

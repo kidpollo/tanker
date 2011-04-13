@@ -36,11 +36,12 @@ module Tanker
     end
 
     def included(klass)
+      configuration # raises error if not defined
+
       @included_in ||= []
       @included_in << klass
       @included_in.uniq!
 
-      configuration # raises error if not defined
       klass.send :include, InstanceMethods
       klass.extend ClassMethods
 
