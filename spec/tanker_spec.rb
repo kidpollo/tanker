@@ -139,6 +139,32 @@ describe Tanker do
       dummy_instance = @dummy_class.new
       dummy_instance.tanker_index_options[:variables].should == { 0 => 1.618034, 1 => 2.7182818 }
     end
+
+    it "can be initially defined in one module and extended in the including class" do
+      dummy_module = Module.new do
+        def self.included(base)
+          base.send :include, Tanker
+
+          base.tankit 'dummy index' do
+            indexes :name
+          end
+        end
+      end
+
+      dummy_class = Class.new do
+        include dummy_module
+
+        tankit 'another index' do
+          indexes :email
+        end
+      end
+
+      dummy_instance = dummy_class.new
+      dummy_instance.tanker_config.index_name.should == 'another index'
+      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.should == [:name, :email]
+
+      Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
+    end
   end
 
   describe 'tanker instance' do
