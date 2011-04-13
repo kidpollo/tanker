@@ -70,6 +70,75 @@ describe Tanker do
       dummy_instance.tanker_config.indexes.any? {|field, block| field == :class_name }.should == true
     end
 
+    it 'should overwrite the previous index name if provided' do
+      @dummy_class.send(:tankit, 'first index') do
+      end
+      @dummy_class.send(:tankit, 'second index') do
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.tanker_config.index_name.should == 'second index'
+    end
+
+    it 'should keep the previous index name if not provided' do
+      @dummy_class.send(:tankit, 'dummy index') do
+      end
+      @dummy_class.send(:tankit) do
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.tanker_config.index_name.should == 'dummy index'
+    end
+
+    it 'should keep previously indexed fields' do
+      @dummy_class.send(:tankit, 'dummy index') do
+        indexes :something
+      end
+      @dummy_class.send(:tankit, 'dummy index') do
+        indexes :something_else
+      end
+
+      dummy_instance = @dummy_class.new
+      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.should == [:something, :something_else]
+    end
+
+    it 'should overwrite previously indexed fields if re-indexed' do
+      @dummy_class.send(:tankit, 'dummy index') do
+        indexes :something do
+          "first"
+        end
+      end
+      @dummy_class.send(:tankit, 'dummy index') do
+        indexes :something do
+          "second"
+        end
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.stub!(:id => 1)
+      dummy_instance.tanker_index_data[:something].should == "second"
+    end
+
+    it 'should merge with previously defined variables' do
+      @dummy_class.send(:tankit, 'dummy index') do
+        variables do
+          {
+            0 => 3.1415927,
+            1 => 2.7182818
+          }
+        end
+      end
+      @dummy_class.send(:tankit, 'dummy index') do
+        variables do
+          {
+            0 => 1.618034
+          }
+        end
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.tanker_index_options[:variables].should == { 0 => 1.618034, 1 => 2.7182818 }
+    end
   end
 
   describe 'tanker instance' do

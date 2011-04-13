@@ -151,9 +151,23 @@ module Tanker
 
     attr_accessor :tanker_config
 
-    def tankit(name, &block)
+    def tankit(name = nil, &block)
       if block_given?
-        self.tanker_config = ModelConfig.new(name, block)
+        raise(StandardError, 'Please provide an index name') if name.nil? && self.tanker_config.nil?
+
+        self.tanker_config ||= ModelConfig.new(name, Proc.new)
+        name ||= self.tanker_config.index_name
+
+        self.tanker_config.index_name = name
+
+        config = ModelConfig.new(name, block)
+        config.indexes.each do |key, value|
+          self.tanker_config.indexes << [key, value]
+        end
+
+        self.tanker_config.variables do
+          instance_exec &config.variables.first
+        end
       else
         raise(NoBlockGiven, 'Please provide a block')
       end
@@ -194,11 +208,12 @@ module Tanker
   end
 
   class ModelConfig
-    attr_reader :index_name
+    attr_accessor :index_name
 
     def initialize(index_name, block)
       @index_name = index_name
       @indexes    = []
+      @variables  = []
       @functions  = {}
       instance_exec &block
     end
@@ -209,7 +224,7 @@ module Tanker
     end
 
     def variables(&block)
-      @variables = block if block
+      @variables << block if block
       @variables
     end
 
@@ -275,8 +290,10 @@ module Tanker
     def tanker_index_options
       options = {}
 
-      if tanker_variables
-        options[:variables] = instance_exec(&tanker_variables)
+      unless tanker_variables.empty?
+        options[:variables] = tanker_variables.inject({}) do |hash, variables|
+          hash.merge(instance_exec(&variables))
+        end
       end
 
       options
