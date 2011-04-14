@@ -24,6 +24,7 @@ module Tanker
 
   class NotConfigured < StandardError; end
   class NoBlockGiven < StandardError; end
+  class NoIndexName < StandardError; end
 
   autoload :Configuration, 'tanker/configuration'
   extend Configuration
@@ -153,7 +154,7 @@ module Tanker
 
     def tankit(name = nil, &block)
       if block_given?
-        raise(StandardError, 'Please provide an index name') if name.nil? && self.tanker_config.nil?
+        raise(NoIndexName, 'Please provide an index name') if name.nil? && self.tanker_config.nil?
 
         self.tanker_config ||= ModelConfig.new(name, Proc.new)
         name ||= self.tanker_config.index_name
