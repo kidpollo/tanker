@@ -165,8 +165,10 @@ module Tanker
           self.tanker_config.indexes << [key, value]
         end
 
-        self.tanker_config.variables do
-          instance_exec &config.variables.first
+        unless config.variables.empty?
+          self.tanker_config.variables do
+            instance_exec &config.variables.first
+          end
         end
       else
         raise(NoBlockGiven, 'Please provide a block')
