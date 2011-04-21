@@ -6,7 +6,7 @@ yet powerful approach to integrate IndexTank with any orm and
 also supports pagination using +will_paginate/collection+.
 
 Very little is needed to make it work,
-basically, all you need is that the orm instance respond to +id+ and any attributes
+basically, all you need is that the orm instance respond to +id+, +all+, +find+ and any attributes
 you wish to index.
 
 == Installation
