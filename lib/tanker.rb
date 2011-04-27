@@ -24,6 +24,7 @@ module Tanker
 
   class NotConfigured < StandardError; end
   class NoBlockGiven < StandardError; end
+  class NoIndexName < StandardError; end
 
   autoload :Configuration, 'tanker/configuration'
   extend Configuration
@@ -36,11 +37,12 @@ module Tanker
     end
 
     def included(klass)
+      configuration # raises error if not defined
+
       @included_in ||= []
       @included_in << klass
       @included_in.uniq!
 
-      configuration # raises error if not defined
       klass.send :include, InstanceMethods
       klass.extend ClassMethods
 
@@ -71,7 +73,6 @@ module Tanker
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
       end
 
-
       # move conditions into the query body
       if conditions = options.delete(:conditions)
         conditions.each do |field, value|
@@ -96,6 +97,8 @@ module Tanker
         end
       end
 
+      options[:fetch] = "__type,__id"
+
       query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).join(' OR ')})"
       options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
       results = index.search(query, options)
@@ -118,26 +121,21 @@ module Tanker
         return [] if results.empty?
 
         id_map = results.inject({}) do |acc, result|
-          model, id = result["docid"].split(" ", 2)
+          model = result["__type"]
+          id = constantize(model).tanker_parse_doc_id(result)
           acc[model] ||= []
           acc[model] << id.to_i
           acc
         end
 
-        if 1 == id_map.size # check for simple case, just one model involved
-          klass = constantize(id_map.keys.first)
-          # eager-load and return just this model's records
-          klass.find(id_map.values.flatten)
-        else # complex case, multiple models involved
-          id_map.each do |klass, ids|
-            # replace the id list with an eager-loaded list of records for this model
-            id_map[klass] = constantize(klass).find(ids)
-          end
-          # return them in order
-          results.map do |result|
-            model, id = result["docid"].split(" ", 2)
-            id_map[model].detect {|record| id.to_i == record.id }
-          end
+        id_map.each do |klass, ids|
+          # replace the id list with an eager-loaded list of records for this model
+          id_map[klass] = constantize(klass).find(ids)
+        end
+        # return them in order
+        results.map do |result|
+          model, id = result["__type"], result["__id"]
+          id_map[model].detect {|record| id.to_i == record.id }
         end
       end
 
@@ -154,9 +152,25 @@ module Tanker
 
     attr_accessor :tanker_config
 
-    def tankit(name, &block)
+    def tankit(name = nil, &block)
       if block_given?
-        self.tanker_config = ModelConfig.new(name, block)
+        raise(NoIndexName, 'Please provide an index name') if name.nil? && self.tanker_config.nil?
+
+        self.tanker_config ||= ModelConfig.new(name, Proc.new)
+        name ||= self.tanker_config.index_name
+
+        self.tanker_config.index_name = name
+
+        config = ModelConfig.new(name, block)
+        config.indexes.each do |key, value|
+          self.tanker_config.indexes << [key, value]
+        end
+
+        unless config.variables.empty?
+          self.tanker_config.variables do
+            instance_exec &config.variables.first
+          end
+        end
       else
         raise(NoBlockGiven, 'Please provide a block')
       end
@@ -190,14 +204,19 @@ module Tanker
       end
       puts "Indexed #{record_size} #{self} records in #{Time.now - timer} seconds"
     end
+
+    def tanker_parse_doc_id(result)
+      result['docid'].split(' ').last
+    end
   end
 
   class ModelConfig
-    attr_reader :index_name
+    attr_accessor :index_name
 
     def initialize(index_name, block)
       @index_name = index_name
       @indexes    = []
+      @variables  = []
       @functions  = {}
       instance_exec &block
     end
@@ -208,7 +227,7 @@ module Tanker
     end
 
     def variables(&block)
-      @variables = block if block
+      @variables << block if block
       @variables
     end
 
@@ -266,6 +285,7 @@ module Tanker
 
       data[:__any] = data.values.sort_by{|v| v.to_s}.join " . "
       data[:__type] = self.class.name
+      data[:__id] = self.id
 
       data
     end
@@ -273,8 +293,10 @@ module Tanker
     def tanker_index_options
       options = {}
 
-      if tanker_variables
-        options[:variables] = instance_exec(&tanker_variables)
+      unless tanker_variables.empty?
+        options[:variables] = tanker_variables.inject({}) do |hash, variables|
+          hash.merge(instance_exec(&variables))
+        end
       end
 
       options

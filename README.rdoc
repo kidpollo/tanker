@@ -177,7 +177,56 @@ IndexTank and the Tanker gem support native geographic calculations. All you nee
                       :function => 1,
                       :filter_functions => {2 => [['*', 50]]})
 
+== Extend your index definitions
 
+If you have a bunch of models with a lot of overlapping indexed fields,
+variables, or categories, you might want to abstract those out into a module
+that you can include and then extend in the including classes. Something like:
+
+    module TankerDefaults
+      def self.included(base)
+        base.send(:include, ::Tanker) # include the actual Tanker module
+
+        # provide a default index name
+        base.tankit 'my_index' do
+          # index some common fields
+          indexes :tag_list
+
+          # set some common variables
+          variables do
+            {
+              0 => view_count
+              1 => foo
+            }
+          end
+        end
+      end
+    end
+
+    class SuperModel
+      include TankerDefaults
+
+      # no need to respecify the index if it's the same
+      # (but you can override it)
+      tankit do
+        # `indexes :tag_list` is inherited
+        indexes :name
+        indexes :boyfriend_names do
+          boyfriends.map(&:name)
+        end
+
+        # set some more specific variables
+        variables do
+          {
+            # `0 => view_count` is inherited
+            1 => iq,                 # overwrites "foo"
+            2 => endorsements.count  # adds new variables
+          }
+        end
+      end
+    end
+
+You currently can't remove previously defined stuff, though.
 
 == Reindex your data
 
