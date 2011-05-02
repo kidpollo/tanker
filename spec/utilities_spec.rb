@@ -13,7 +13,7 @@ describe Tanker::Utilities do
   end
 
   it "should get the models where Tanker module was included" do
-    (Tanker::Utilities.get_model_classes - [@dummy_class, Person, Dog, Cat]).should == []
+    (Tanker::Utilities.get_model_classes - [@dummy_class, Person, Dog, Cat, Foo::Bar]).should == []
   end
 
   it "should get the available indexes" do

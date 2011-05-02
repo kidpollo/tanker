@@ -204,8 +204,8 @@ describe Tanker do
 
     it 'should be able to use multi-value query phrases' do
       Person.tanker_index.should_receive(:search).with(
-        "__any:(hey! location_id:(1) location_id:(2)) __type:(Person)",
-        {:start => 0, :len => 10, :fetch => "__type,__id"}
+        /__any:\(hey! location_id:\(1\) location_id:\(2\)\)/,
+        anything
       ).and_return({'results' => [], 'matches' => 0})
 
       collection = Person.search_tank('hey!', :conditions => {:location_id => [1,2]})
@@ -213,12 +213,8 @@ describe Tanker do
 
     it 'should be able to use filter_functions' do
       Person.tanker_index.should_receive(:search).with(
-        "__any:(hey!) __type:(Person)",
-        { :start => 0,
-          :len => 10,
-          :filter_function2 => "0:10,20:40",
-          :fetch => "__type,__id"
-        }
+        anything,
+        hash_including(:filter_function2 => "0:10,20:40")
       ).and_return({'results' => [], 'matches' => 0})
 
       collection = Person.search_tank('hey!',
@@ -228,12 +224,8 @@ describe Tanker do
     end
     it 'should be able to use filter_docvars' do
       Person.tanker_index.should_receive(:search).with(
-        "__any:(hey!) __type:(Person)",
-        { :start => 0,
-          :len => 10,
-          :filter_docvar3 => "*:7,80:100",
-          :fetch => "__type,__id"
-        }
+        anything,
+        hash_including(:filter_docvar3 => "*:7,80:100")
       ).and_return({'results' => [], 'matches' => 0})
 
       collection = Person.search_tank('hey!',
@@ -277,6 +269,23 @@ describe Tanker do
       collection.total_pages.should == 1
       collection.per_page.should == 10
       collection.current_page.should == 1
+    end
+
+    it 'should be able to search for modularized model classes' do
+      Foo::Bar.tanker_index.
+        should_receive(:search).
+        with(/__type:\(.*"Foo Bar".*\)/, anything).
+        and_return({
+          "results" => [{
+            "docid"  => 'Foo::Bar 42',
+            "__type" => 'Foo::Bar',
+            "__id"   => '42'
+          }]
+        })
+
+      Foo::Bar.should_receive(:find).and_return([stub(:id => 42)])
+
+      Foo::Bar.search_tank('bar')
     end
 
     it 'should be able to update the index' do

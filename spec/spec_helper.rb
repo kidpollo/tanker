@@ -73,4 +73,14 @@ class Cat
 
 end
 
+module Foo
+  class Bar
+    include Tanker
 
+    tankit 'dummy index' do
+      indexes :bar do
+        "bar"
+      end
+    end
+  end
+end
