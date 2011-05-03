@@ -99,7 +99,7 @@ module Tanker
 
       options[:fetch] = "__type,__id"
 
-      query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).join(' OR ')})"
+      query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
       options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
       results = index.search(query, options)
 
@@ -139,10 +139,16 @@ module Tanker
         end
       end
 
-      def constantize(klass_name)
-        Object.const_defined?(klass_name) ?
-                  Object.const_get(klass_name) :
-                  Object.const_missing(klass_name)
+      # borrowed from Rails' ActiveSupport::Inflector
+      def constantize(camel_cased_word)
+        names = camel_cased_word.split('::')
+        names.shift if names.empty? || names.first.empty?
+
+        constant = Object
+        names.each do |name|
+          constant = constant.const_defined?(name) ? constant.const_get(name) : constant.const_missing(name)
+        end
+        constant
       end
   end
 
