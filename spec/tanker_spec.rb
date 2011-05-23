@@ -140,6 +140,15 @@ describe Tanker do
       dummy_instance.tanker_index_options[:variables].should == { 0 => 1.618034, 1 => 2.7182818 }
     end
 
+    it 'should allow setting of __type by supplying :as option' do
+      @dummy_class.send(:tankit, 'dummy index', { :as => 'MySpecialModel' }) do
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.stub!(:id => 1)
+      dummy_instance.tanker_index_data[:__type].should == 'MySpecialModel'
+    end
+
     it "can be initially defined in one module and extended in the including class" do
       dummy_module = Module.new do
         def self.included(base)
