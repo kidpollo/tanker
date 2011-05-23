@@ -228,6 +228,35 @@ that you can include and then extend in the including classes. Something like:
 
 You currently can't remove previously defined stuff, though.
 
+=== Single table inheritance
+
+If you are using tanker with STI models and want the different models to be indexed
+as the same type, you can provide the base model name with an +:as+ option to +tankit+.
+
+    module TankerPetDefaults
+      def self.included(base)
+        base.send(:include, ::Tanker)
+
+        base.tankit 'my_index', :as => 'Pet' do
+          indexes :skills
+        end
+      end
+    end
+
+    class Pet < ActiveRecord::Base
+    end
+
+    class Cat < Pet 
+      include TankerPetDefaults
+    end
+
+    class Monkey < Pet 
+      include TankerPetDefaults
+    end
+
+    # Search using the base model
+    Pet.search('stealth')
+
 == Reindex your data
 
 If you are using rails 3 there are of couple of rake tasks included in your project

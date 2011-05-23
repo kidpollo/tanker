@@ -158,11 +158,11 @@ module Tanker
 
     attr_accessor :tanker_config
 
-    def tankit(name = nil, &block)
+    def tankit(name = nil, options = {}, &block)
       if block_given?
         raise(NoIndexName, 'Please provide an index name') if name.nil? && self.tanker_config.nil?
 
-        self.tanker_config ||= ModelConfig.new(name, Proc.new)
+        self.tanker_config ||= ModelConfig.new(name, options, Proc.new)
         name ||= self.tanker_config.index_name
 
         self.tanker_config.index_name = name
@@ -218,9 +218,11 @@ module Tanker
 
   class ModelConfig
     attr_accessor :index_name
+    attr_accessor :options
 
-    def initialize(index_name, block)
+    def initialize(index_name, options = {}, block)
       @index_name = index_name
+      @options    = options
       @indexes    = []
       @variables  = []
       @functions  = {}
@@ -290,7 +292,7 @@ module Tanker
       end
 
       data[:__any] = data.values.sort_by{|v| v.to_s}.join " . "
-      data[:__type] = self.class.name
+      data[:__type] = type_name
       data[:__id] = self.id
 
       data
@@ -310,7 +312,11 @@ module Tanker
 
     # create a unique index based on the model name and unique id
     def it_doc_id
-      self.class.name + ' ' + self.id.to_s
+      type_name + ' ' + self.id.to_s
+    end
+
+    def type_name
+      tanker_config.options[:as] || self.class.name
     end
   end
 end
