@@ -124,7 +124,7 @@ module Tanker
           model = result["__type"]
           id = constantize(model).tanker_parse_doc_id(result)
           acc[model] ||= []
-          acc[model] << id.to_i
+          acc[model] << id
           acc
         end
 
@@ -135,7 +135,7 @@ module Tanker
         # return them in order
         results.map do |result|
           model, id = result["__type"], result["__id"]
-          id_map[model].detect {|record| id.to_i == record.id }
+          id_map[model].detect {|record| id == record.id.to_s }
         end
       end
 

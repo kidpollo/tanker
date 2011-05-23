@@ -202,6 +202,34 @@ describe Tanker do
       collection.current_page.should == 1
     end
 
+    it 'should handle string and integer ids in search results' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 2,
+          "results" => [{
+            "docid"  => 'Person mystring1d',
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => 'mystring1d'
+          },{
+            "docid"  => 'Person 1',
+            "name"   => 'jaun',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).with(['mystring1d', '1']).and_return(
+        [Person.new, Person.new]
+      )
+
+      collection = Person.search_tank('hey!')
+      collection.class.should == WillPaginate::Collection
+      collection.total_entries.should == 2
+    end
+
     it 'should be able to use multi-value query phrases' do
       Person.tanker_index.should_receive(:search).with(
         /__any:\(hey! location_id:\(1\) location_id:\(2\)\)/,
