@@ -64,10 +64,9 @@ module Tanker
     def search(models, query, options = {})
       ids      = []
       models   = [models].flatten.uniq
-      page     = (options.delete(:page) || 1).to_i
-      per_page = (options.delete(:per_page) || models.first.per_page).to_i
       index    = models.first.tanker_index
       query    = query.join(' ') if Array === query
+      paginate = extract_setup_paginate_options(options, :page => 1, :per_page => models.first.per_page)
 
       if (index_names = models.map(&:tanker_config).map(&:index_name).uniq).size > 1
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
@@ -100,18 +99,12 @@ module Tanker
       options[:fetch] = "__type,__id"
 
       query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
-      options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
+      options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
+      instantiated_results = instantiate_results(results)
 
-      @entries = WillPaginate::Collection.create(page, per_page) do |pager|
-        # inject the result array into the paginated collection:
-        pager.replace instantiate_results(results)
-
-        unless pager.total_entries
-          # the pager didn't manage to guess the total count, do it manually
-          pager.total_entries = results["matches"]
-        end
-      end
+      @entries = paginate === false ? instantiated_results :
+                                      WillPaginate::Collection.create(paginate[:page], paginate[:per_page], results['matches']) { |pager| pager.replace instantiated_results }
     end
 
     protected
@@ -149,6 +142,22 @@ module Tanker
           constant = constant.const_defined?(name) ? constant.const_get(name) : constant.const_missing(name)
         end
         constant
+      end
+
+      def extract_setup_paginate_options(options, defaults)
+        # extract
+        paginate_options = if options[:paginate] or options[:paginate] === false
+          options.delete(:paginate)
+        else
+          { :page => options.delete(:page), :per_page => options.delete(:per_page) }
+        end
+        # setup defaults and ensure we got integer values
+        unless paginate_options === false
+          paginate_options[:page] = defaults[:page] unless paginate_options[:page]
+          paginate_options[:per_page] = defaults[:per_page] unless paginate_options[:per_page]
+          paginate_options.each { |key, value| paginate_options[key] = value.to_i }
+        end
+        paginate_options
       end
   end
 

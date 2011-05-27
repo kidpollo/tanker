@@ -325,6 +325,65 @@ describe Tanker do
       Foo::Bar.search_tank('bar')
     end
 
+    it 'should be able to perform a search without pagination' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 2,
+          "results" => [{
+            "docid"  => 'Person 1',
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          },{
+            "docid"  => 'Person 2',
+            "name"   => 'jaun',
+            "__type" => 'Person',
+            "__id"   => '2'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).with(['1', '2']).and_return(
+        [Person.new, Person.new]
+      )
+
+      collection = Person.search_tank('hey!', :paginate => false)
+      collection.class.should == Array
+      collection.size.should == 2
+    end
+
+    it 'should be able to perform a search with pagination settings in :paginate option' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 2,
+          "results" => [{
+            "docid"  => 'Person 1',
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          },{
+            "docid"  => 'Person 2',
+            "name"   => 'jaun',
+            "__type" => 'Person',
+            "__id"   => '2'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).with(['1', '2']).and_return(
+        [Person.new, Person.new]
+      )
+
+      collection = Person.search_tank('hey!', :paginate => { :page => 2, :per_page => 1 })
+      collection.class.should == WillPaginate::Collection
+      collection.total_entries.should == 2
+      collection.total_pages.should == 2
+      collection.per_page.should == 1
+      collection.current_page.should == 2
+    end
+
     it 'should be able to update the index' do
       person = Person.new(:name => 'Name', :last_name => 'Last Name')
 
