@@ -119,6 +119,10 @@ Paginate Results
 
     <% will_paginate(@topics) %>
 
+Disable pagination of search results
+
+    @topics = Topic.search_tank('keyword', :paginate => false)
+
 == Geospatial Search Example
 
 IndexTank and the Tanker gem support native geographic calculations. All you need is to define two document variables with your latitude and your longitude
