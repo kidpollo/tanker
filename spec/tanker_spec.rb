@@ -5,10 +5,16 @@ describe Tanker do
   describe "configuration" do
 
     it 'sets configuration' do
-      conf =  {:url => 'http://api.indextank.com'}
+      conf =  {:url => 'http://api.indextank.com', :pagination_backend => :will_paginate}
       Tanker.configuration = conf
 
       Tanker.configuration.should == conf
+    end
+
+    it 'adds default values to configuration on set if needed' do
+      conf = {:url => 'http://api.indextank.com'}
+      Tanker.configuration = conf
+      Tanker.configuration.should == conf.merge(:pagination_backend => :will_paginate)
     end
 
     it 'checks for configuration when the module is included' do
@@ -442,5 +448,59 @@ describe Tanker do
       person.delete_tank_indexes
     end
 
+  end
+
+  describe "Kaminari support" do
+
+    before :all do
+      Tanker.configuration = {:url => 'http://api.indextank.com', :pagination_backend => :kaminari}
+    end
+
+    after :all do
+      Tanker.configuration = {}
+    end
+
+    it 'should raise error message if Kaminari gem is not required' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"  => Person.new.it_doc_id,
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        }
+      )
+      Person.should_receive(:find).and_return([Person.new])
+
+      lambda { Person.search_tank('test') }.should raise_error(Tanker::BadConfiguration)
+    end
+
+    it 'should be able to return Kaminari compatible array for a search' do
+      require 'kaminari'
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"  => Person.new.it_doc_id,
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).and_return([Person.new])
+
+      array = Person.search_tank('hey!')
+      array.class.should == Tanker::KaminariPaginatedArray
+      array.total_count.should == 1
+      array.num_pages.should == 1
+      array.limit_value.should == 10
+      array.current_page.should == 1
+    end
   end
 end

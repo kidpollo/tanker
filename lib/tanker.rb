@@ -1,4 +1,3 @@
-
 begin
   require "rubygems"
   require "bundler"
@@ -12,7 +11,6 @@ require 'tanker/configuration'
 require 'tanker/utilities'
 require 'will_paginate/collection'
 
-
 if defined? Rails
   begin
     require 'tanker/railtie'
@@ -23,11 +21,14 @@ end
 module Tanker
 
   class NotConfigured < StandardError; end
+  class BadConfiguration < StandardError; end
   class NoBlockGiven < StandardError; end
   class NoIndexName < StandardError; end
 
   autoload :Configuration, 'tanker/configuration'
   extend Configuration
+
+  autoload :KaminariPaginatedArray, 'tanker/paginated_array'
 
   class << self
     attr_reader :included_in
@@ -103,8 +104,7 @@ module Tanker
       results = index.search(query, options)
       instantiated_results = instantiate_results(results)
 
-      @entries = paginate === false ? instantiated_results :
-                                      WillPaginate::Collection.create(paginate[:page], paginate[:per_page], results['matches']) { |pager| pager.replace instantiated_results }
+      paginate === false ? instantiated_results : paginate_results(instantiated_results, paginate, results['matches'])
     end
 
     protected
@@ -129,6 +129,22 @@ module Tanker
         results.map do |result|
           model, id = result["__type"], result["__id"]
           id_map[model].detect {|record| id == record.id.to_s }
+        end
+      end
+
+      def paginate_results(results, pagination_options, total_hits)
+        case Tanker.configuration[:pagination_backend]
+        when :will_paginate
+          WillPaginate::Collection.create(pagination_options[:page],
+                                          pagination_options[:per_page],
+                                          total_hits) { |pager| pager.replace results }
+        when :kaminari
+          Tanker::KaminariPaginatedArray.new(results,
+                                             pagination_options[:per_page],
+                                             pagination_options[:page]-1,
+                                             total_hits)
+        else
+          raise(BadConfiguration, "Unknown pagination backend")
         end
       end
 
