@@ -2,8 +2,9 @@
 
 IndexTank is a great search indexing service, this gem tries to make
 that any orm stays in sync with IndexTank easily. It has a simple
-yet powerful approach to integrate IndexTank with any orm and
-also supports pagination using +will_paginate/collection+.
+yet powerful approach to integrate IndexTank with any ORM and
+also supports pagination using {WillPaginate}[https://github.com/mislav/will_paginate] (default)
+or {Kaminari}[https://github.com/amatsuda/kaminari].
 
 Very little is needed to make it work,
 basically, all you need is that the orm instance respond to +id+, +all+, +find+ and any attributes
@@ -25,13 +26,25 @@ If you're using Rails, config/initializers/tanker.rb is a good place for this:
 
     YourAppName::Application.config.index_tank_url = 'http://:xxxxxxxxx@xxxxx.api.indextank.com'
 
-If you are not using rails you can put this somewhere before you load your modesl
+If you are not using rails you can put this somewhere before you load your models
 
     Tanker.configuration = {:url => 'http://:xxxxxxxxx@xxxxx.api.indextank.com' }
 
 You would probably want to have fancier configuration depending on
 your environment. Be sure to copy and paste the correct url provided
 by the IndexTank Dashboard
+
+=== Pagination
+
+WillPaginate is used by default and you don't have to add any extra settings to use that. If you
+want to use Kaminari you have to add the following:
+
+    YourAppName::Application.config.index_tank_url = 'http://...'
+    YourAppName::Application.config.tanker_pagination_backend = :kaminari  
+
+or
+
+    Tanker.configuration = {:url => 'http://...', :pagination_backend => :kaminari }
 
 == Example
     
@@ -117,7 +130,12 @@ Search with query variables
 
 Paginate Results
 
-    <% will_paginate(@topics) %>
+    <%= will_paginate @topics %> for WillPaginate 
+    <%= paginate @topics %> for Kaminari
+
+Disable pagination of search results
+
+    @topics = Topic.search_tank('keyword', :paginate => false)
 
 == Geospatial Search Example
 
@@ -227,6 +245,35 @@ that you can include and then extend in the including classes. Something like:
     end
 
 You currently can't remove previously defined stuff, though.
+
+=== Single table inheritance
+
+If you are using tanker with STI models and want the different models to be indexed
+as the same type, you can provide the base model name with an +:as+ option to +tankit+.
+
+    module TankerPetDefaults
+      def self.included(base)
+        base.send(:include, ::Tanker)
+
+        base.tankit 'my_index', :as => 'Pet' do
+          indexes :skills
+        end
+      end
+    end
+
+    class Pet < ActiveRecord::Base
+    end
+
+    class Cat < Pet 
+      include TankerPetDefaults
+    end
+
+    class Monkey < Pet 
+      include TankerPetDefaults
+    end
+
+    # Search using the base model
+    Pet.search('stealth')
 
 == Reindex your data
 

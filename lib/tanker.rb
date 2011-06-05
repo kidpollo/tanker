@@ -1,4 +1,3 @@
-
 begin
   require "rubygems"
   require "bundler"
@@ -12,7 +11,6 @@ require 'tanker/configuration'
 require 'tanker/utilities'
 require 'will_paginate/collection'
 
-
 if defined? Rails
   begin
     require 'tanker/railtie'
@@ -23,11 +21,14 @@ end
 module Tanker
 
   class NotConfigured < StandardError; end
+  class BadConfiguration < StandardError; end
   class NoBlockGiven < StandardError; end
   class NoIndexName < StandardError; end
 
   autoload :Configuration, 'tanker/configuration'
   extend Configuration
+
+  autoload :KaminariPaginatedArray, 'tanker/paginated_array'
 
   class << self
     attr_reader :included_in
@@ -64,10 +65,9 @@ module Tanker
     def search(models, query, options = {})
       ids      = []
       models   = [models].flatten.uniq
-      page     = (options.delete(:page) || 1).to_i
-      per_page = (options.delete(:per_page) || models.first.per_page).to_i
       index    = models.first.tanker_index
       query    = query.join(' ') if Array === query
+      paginate = extract_setup_paginate_options(options, :page => 1, :per_page => models.first.per_page)
 
       if (index_names = models.map(&:tanker_config).map(&:index_name).uniq).size > 1
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
@@ -99,19 +99,12 @@ module Tanker
 
       options[:fetch] = "__type,__id"
 
-      query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).join(' OR ')})"
-      options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
+      query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
+      options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
+      instantiated_results = instantiate_results(results)
 
-      @entries = WillPaginate::Collection.create(page, per_page) do |pager|
-        # inject the result array into the paginated collection:
-        pager.replace instantiate_results(results)
-
-        unless pager.total_entries
-          # the pager didn't manage to guess the total count, do it manually
-          pager.total_entries = results["matches"]
-        end
-      end
+      paginate === false ? instantiated_results : paginate_results(instantiated_results, paginate, results['matches'])
     end
 
     protected
@@ -124,7 +117,7 @@ module Tanker
           model = result["__type"]
           id = constantize(model).tanker_parse_doc_id(result)
           acc[model] ||= []
-          acc[model] << id.to_i
+          acc[model] << id
           acc
         end
 
@@ -135,14 +128,52 @@ module Tanker
         # return them in order
         results.map do |result|
           model, id = result["__type"], result["__id"]
-          id_map[model].detect {|record| id.to_i == record.id }
+          id_map[model].detect {|record| id == record.id.to_s }
         end
       end
 
-      def constantize(klass_name)
-        Object.const_defined?(klass_name) ?
-                  Object.const_get(klass_name) :
-                  Object.const_missing(klass_name)
+      def paginate_results(results, pagination_options, total_hits)
+        case Tanker.configuration[:pagination_backend]
+        when :will_paginate
+          WillPaginate::Collection.create(pagination_options[:page],
+                                          pagination_options[:per_page],
+                                          total_hits) { |pager| pager.replace results }
+        when :kaminari
+          Tanker::KaminariPaginatedArray.new(results,
+                                             pagination_options[:per_page],
+                                             pagination_options[:page]-1,
+                                             total_hits)
+        else
+          raise(BadConfiguration, "Unknown pagination backend")
+        end
+      end
+
+      # borrowed from Rails' ActiveSupport::Inflector
+      def constantize(camel_cased_word)
+        names = camel_cased_word.split('::')
+        names.shift if names.empty? || names.first.empty?
+
+        constant = Object
+        names.each do |name|
+          constant = constant.const_defined?(name) ? constant.const_get(name) : constant.const_missing(name)
+        end
+        constant
+      end
+
+      def extract_setup_paginate_options(options, defaults)
+        # extract
+        paginate_options = if options[:paginate] or options[:paginate] === false
+          options.delete(:paginate)
+        else
+          { :page => options.delete(:page), :per_page => options.delete(:per_page) }
+        end
+        # setup defaults and ensure we got integer values
+        unless paginate_options === false
+          paginate_options[:page] = defaults[:page] unless paginate_options[:page]
+          paginate_options[:per_page] = defaults[:per_page] unless paginate_options[:per_page]
+          paginate_options.each { |key, value| paginate_options[key] = value.to_i }
+        end
+        paginate_options
       end
   end
 
@@ -152,11 +183,11 @@ module Tanker
 
     attr_accessor :tanker_config
 
-    def tankit(name = nil, &block)
+    def tankit(name = nil, options = {}, &block)
       if block_given?
         raise(NoIndexName, 'Please provide an index name') if name.nil? && self.tanker_config.nil?
 
-        self.tanker_config ||= ModelConfig.new(name, Proc.new)
+        self.tanker_config ||= ModelConfig.new(name, options, Proc.new)
         name ||= self.tanker_config.index_name
 
         self.tanker_config.index_name = name
@@ -212,9 +243,11 @@ module Tanker
 
   class ModelConfig
     attr_accessor :index_name
+    attr_accessor :options
 
-    def initialize(index_name, block)
+    def initialize(index_name, options = {}, block)
       @index_name = index_name
+      @options    = options
       @indexes    = []
       @variables  = []
       @functions  = {}
@@ -284,7 +317,7 @@ module Tanker
       end
 
       data[:__any] = data.values.sort_by{|v| v.to_s}.join " . "
-      data[:__type] = self.class.name
+      data[:__type] = type_name
       data[:__id] = self.id
 
       data
@@ -304,7 +337,11 @@ module Tanker
 
     # create a unique index based on the model name and unique id
     def it_doc_id
-      self.class.name + ' ' + self.id.to_s
+      type_name + ' ' + self.id.to_s
+    end
+
+    def type_name
+      tanker_config.options[:as] || self.class.name
     end
   end
 end

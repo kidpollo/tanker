@@ -5,10 +5,16 @@ describe Tanker do
   describe "configuration" do
 
     it 'sets configuration' do
-      conf =  {:url => 'http://api.indextank.com'}
+      conf =  {:url => 'http://api.indextank.com', :pagination_backend => :will_paginate}
       Tanker.configuration = conf
 
       Tanker.configuration.should == conf
+    end
+
+    it 'adds default values to configuration on set if needed' do
+      conf = {:url => 'http://api.indextank.com'}
+      Tanker.configuration = conf
+      Tanker.configuration.should == conf.merge(:pagination_backend => :will_paginate)
     end
 
     it 'checks for configuration when the module is included' do
@@ -140,6 +146,15 @@ describe Tanker do
       dummy_instance.tanker_index_options[:variables].should == { 0 => 1.618034, 1 => 2.7182818 }
     end
 
+    it 'should allow setting of __type by supplying :as option' do
+      @dummy_class.send(:tankit, 'dummy index', { :as => 'MySpecialModel' }) do
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.stub!(:id => 1)
+      dummy_instance.tanker_index_data[:__type].should == 'MySpecialModel'
+    end
+
     it "can be initially defined in one module and extended in the including class" do
       dummy_module = Module.new do
         def self.included(base)
@@ -202,10 +217,38 @@ describe Tanker do
       collection.current_page.should == 1
     end
 
+    it 'should handle string and integer ids in search results' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 2,
+          "results" => [{
+            "docid"  => 'Person mystring1d',
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => 'mystring1d'
+          },{
+            "docid"  => 'Person 1',
+            "name"   => 'jaun',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).with(['mystring1d', '1']).and_return(
+        [Person.new, Person.new]
+      )
+
+      collection = Person.search_tank('hey!')
+      collection.class.should == WillPaginate::Collection
+      collection.total_entries.should == 2
+    end
+
     it 'should be able to use multi-value query phrases' do
       Person.tanker_index.should_receive(:search).with(
-        "__any:(hey! location_id:(1) location_id:(2)) __type:(Person)",
-        {:start => 0, :len => 10, :fetch => "__type,__id"}
+        /__any:\(hey! location_id:\(1\) location_id:\(2\)\)/,
+        anything
       ).and_return({'results' => [], 'matches' => 0})
 
       collection = Person.search_tank('hey!', :conditions => {:location_id => [1,2]})
@@ -213,12 +256,8 @@ describe Tanker do
 
     it 'should be able to use filter_functions' do
       Person.tanker_index.should_receive(:search).with(
-        "__any:(hey!) __type:(Person)",
-        { :start => 0,
-          :len => 10,
-          :filter_function2 => "0:10,20:40",
-          :fetch => "__type,__id"
-        }
+        anything,
+        hash_including(:filter_function2 => "0:10,20:40")
       ).and_return({'results' => [], 'matches' => 0})
 
       collection = Person.search_tank('hey!',
@@ -228,12 +267,8 @@ describe Tanker do
     end
     it 'should be able to use filter_docvars' do
       Person.tanker_index.should_receive(:search).with(
-        "__any:(hey!) __type:(Person)",
-        { :start => 0,
-          :len => 10,
-          :filter_docvar3 => "*:7,80:100",
-          :fetch => "__type,__id"
-        }
+        anything,
+        hash_including(:filter_docvar3 => "*:7,80:100")
       ).and_return({'results' => [], 'matches' => 0})
 
       collection = Person.search_tank('hey!',
@@ -277,6 +312,82 @@ describe Tanker do
       collection.total_pages.should == 1
       collection.per_page.should == 10
       collection.current_page.should == 1
+    end
+
+    it 'should be able to search for modularized model classes' do
+      Foo::Bar.tanker_index.
+        should_receive(:search).
+        with(/__type:\(.*"Foo Bar".*\)/, anything).
+        and_return({
+          "results" => [{
+            "docid"  => 'Foo::Bar 42',
+            "__type" => 'Foo::Bar',
+            "__id"   => '42'
+          }]
+        })
+
+      Foo::Bar.should_receive(:find).and_return([stub(:id => 42)])
+
+      Foo::Bar.search_tank('bar')
+    end
+
+    it 'should be able to perform a search without pagination' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 2,
+          "results" => [{
+            "docid"  => 'Person 1',
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          },{
+            "docid"  => 'Person 2',
+            "name"   => 'jaun',
+            "__type" => 'Person',
+            "__id"   => '2'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).with(['1', '2']).and_return(
+        [Person.new, Person.new]
+      )
+
+      collection = Person.search_tank('hey!', :paginate => false)
+      collection.class.should == Array
+      collection.size.should == 2
+    end
+
+    it 'should be able to perform a search with pagination settings in :paginate option' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 2,
+          "results" => [{
+            "docid"  => 'Person 1',
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          },{
+            "docid"  => 'Person 2',
+            "name"   => 'jaun',
+            "__type" => 'Person',
+            "__id"   => '2'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).with(['1', '2']).and_return(
+        [Person.new, Person.new]
+      )
+
+      collection = Person.search_tank('hey!', :paginate => { :page => 2, :per_page => 1 })
+      collection.class.should == WillPaginate::Collection
+      collection.total_entries.should == 2
+      collection.total_pages.should == 2
+      collection.per_page.should == 1
+      collection.current_page.should == 2
     end
 
     it 'should be able to update the index' do
@@ -337,5 +448,59 @@ describe Tanker do
       person.delete_tank_indexes
     end
 
+  end
+
+  describe "Kaminari support" do
+
+    before :all do
+      Tanker.configuration = {:url => 'http://api.indextank.com', :pagination_backend => :kaminari}
+    end
+
+    after :all do
+      Tanker.configuration = {}
+    end
+
+    it 'should raise error message if Kaminari gem is not required' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"  => Person.new.it_doc_id,
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        }
+      )
+      Person.should_receive(:find).and_return([Person.new])
+
+      lambda { Person.search_tank('test') }.should raise_error(Tanker::BadConfiguration)
+    end
+
+    it 'should be able to return Kaminari compatible array for a search' do
+      require 'kaminari'
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"  => Person.new.it_doc_id,
+            "name"   => 'pedro',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).and_return([Person.new])
+
+      array = Person.search_tank('hey!')
+      array.class.should == Tanker::KaminariPaginatedArray
+      array.total_count.should == 1
+      array.num_pages.should == 1
+      array.limit_value.should == 10
+      array.current_page.should == 1
+    end
   end
 end
