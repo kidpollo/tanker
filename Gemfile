@@ -7,6 +7,8 @@ gem 'will_paginate', '>= 2.3.15'
 group :test do
   gem 'rspec', '>= 2.5.0'
   gem 'kaminari'
+  gem 'rspec', '>= 2.5.0'
+  gem 'ruby-debug19' 
 end
 
 

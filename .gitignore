@@ -20,3 +20,4 @@ pkg
 
 ## PROJECT::SPECIFIC
 Gemfile.lock
+spec/integration_spec_conf.rb

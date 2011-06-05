@@ -448,6 +448,43 @@ describe Tanker do
       person.delete_tank_indexes
     end
 
+    describe 'snippets' do
+      it 'should not call find method but instead create new instances the models matched the search with the snippetted fields as snippet_ attributes' do
+        Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"         =>  Person.new.it_doc_id,
+            'snippet_name'  => 'ped...',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        })
+
+        collection = Person.search_tank('hey!', :snippets => [:name])
+        collection[0].name_snippet.should == 'ped...'
+      end
+    end
+
+    describe 'fetch' do
+      it 'should not call find method but instead create new instances the models matched the search with the fetched fields as attributes' do
+        Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"         =>  Person.new.it_doc_id,
+            'name'  => 'Osama',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        })
+
+        collection = Person.search_tank('terrorist', :fetch => [:name])
+        collection[0].name.should == 'Osama'
+      end
+    end
   end
 
   describe "Kaminari support" do
