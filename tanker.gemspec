@@ -31,6 +31,8 @@ Gem::Specification.new do |s|
     "lib/tanker/railtie.rb",
     "lib/tanker/tasks/tanker.rake",
     "lib/tanker/utilities.rb",
+    "spec/integration_spec.rb",
+    "spec/integration_spec_conf.rb.example",
     "spec/spec_helper.rb",
     "spec/tanker_spec.rb",
     "spec/utilities_spec.rb",
@@ -41,6 +43,7 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.8.5}
   s.summary = %q{IndexTank integration to your favorite orm}
   s.test_files = [
+    "spec/integration_spec.rb",
     "spec/spec_helper.rb",
     "spec/tanker_spec.rb",
     "spec/utilities_spec.rb"
