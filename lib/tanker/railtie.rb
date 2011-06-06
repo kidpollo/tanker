@@ -17,8 +17,7 @@ module Tanker
       load "tanker/tasks/tanker.rake"
     end
 
-  private
-    def setup_tanker_configuration
+    def self.setup_tanker_configuration
       Tanker.configuration = {}.tap do |_new_conf|
         _new_conf[:url] = config.index_tank_url if config.index_tank_url
         _new_conf[:pagination_backend] = config.tanker_pagination_backend if config.tanker_pagination_backend
