@@ -41,7 +41,11 @@ class Person
   end
 
   def id
-    1
+    @id ||= 1
+  end
+
+  def id=(val)
+    @id = val
   end
 end
 

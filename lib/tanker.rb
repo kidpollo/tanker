@@ -67,6 +67,8 @@ module Tanker
       models   = [models].flatten.uniq
       index    = models.first.tanker_index
       query    = query.join(' ') if Array === query
+      snippets = options.delete(:snippets)
+      fetch    = options.delete(:fetch)
       paginate = extract_setup_paginate_options(options, :page => 1, :per_page => models.first.per_page)
 
       if (index_names = models.map(&:tanker_config).map(&:index_name).uniq).size > 1
@@ -97,19 +99,28 @@ module Tanker
         end
       end
 
-      options[:fetch] = "__type,__id"
+      # fetch values from index tank or just the type and id to instace results localy
+      options[:fetch]   =  "__type,__id"
+      options[:fetch]   += ",#{fetch.join(',')}" if fetch 
+      options[:snippet] = snippets.join(',') if snippets
+      
+      search_on_fields = models.map{|model| model.tanker_config.indexes.map{|arr| arr[0]}.uniq}.flatten.uniq.join(":(#{query.to_s}) OR ")
+      query = "#{search_on_fields}:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
 
-      query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
-      instantiated_results = instantiate_results(results)
-
+      
+      instantiated_results = if (fetch || snippets)
+        instantiate_results_from_results(results, fetch, snippets)
+      else
+        instantiate_results_from_db(results)
+      end
       paginate === false ? instantiated_results : paginate_results(instantiated_results, paginate, results['matches'])
     end
 
     protected
 
-      def instantiate_results(index_result)
+      def instantiate_results_from_db(index_result) 
         results = index_result['results']
         return [] if results.empty?
 
@@ -120,7 +131,7 @@ module Tanker
           acc[model] << id
           acc
         end
-
+        
         id_map.each do |klass, ids|
           # replace the id list with an eager-loaded list of records for this model
           id_map[klass] = constantize(klass).find(ids)
@@ -146,6 +157,41 @@ module Tanker
         else
           raise(BadConfiguration, "Unknown pagination backend")
         end
+      end
+
+      def instantiate_results_from_results(index_result, fetch = false, snippets = false)
+        results = index_result['results']
+        return [] if results.empty?
+        instances = []   
+        id_map = results.inject({}) do |acc, result|
+          model = result["__type"]
+          instance = constantize(model).new()
+          result.each do |key, value|
+            case key
+            when /snippet/
+              # create snippet reader attribute (method)
+              instance.create_snippet_attribute(key, value)
+            when '__id'
+              # assign id attribute to the model
+              instance.id = value
+            when '__type', 'docid'
+              # do nothing
+            else
+              #assign attributes that are fetched if they match attributes in the model
+              if instance.respond_to?("#{key}=".to_sym)
+                instance.send("#{key}=", value)
+              end
+            end
+          end
+          instances << instance
+        end
+        instances
+      end
+
+      def constantize(klass_name)
+        Object.const_defined?(klass_name) ?
+        Object.const_get(klass_name) :
+        Object.const_missing(klass_name)
       end
 
       # borrowed from Rails' ActiveSupport::Inflector
@@ -221,11 +267,12 @@ module Tanker
       batches = []
       options[:batch_size] ||= 200
       records = options[:scope] ? send(options[:scope]).all : all
-      record_size = records.size
+      record_size = 0
 
       records.each_with_index do |model_instance, idx|
         batch_num = idx / options[:batch_size]
         (batches[batch_num] ||= []) << model_instance
+        record_size += 1
       end
 
       timer = Time.now
@@ -321,6 +368,14 @@ module Tanker
       data[:__id] = self.id
 
       data
+    end
+
+    #dynamically create a snippet read attribute (method)
+    def create_snippet_attribute(key, value)
+      # the method name should something_snippet not snippet_something as the api returns it
+      self.class.send(:define_method,  "#{key.match(/snippet_(\w+)/)[1]}_snippet") do
+        value
+      end
     end
 
     def tanker_index_options

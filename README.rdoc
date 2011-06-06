@@ -137,6 +137,32 @@ Disable pagination of search results
 
     @topics = Topic.search_tank('keyword', :paginate => false)
 
+== Fetching attributes and snippets
+
+As of version 1.1 Tanker supports fetching attributes and snippets directly from the Index. If you use either of this search options
+your Model instances will be instanced from the attributes coming from the index not by making another trip to the database.
+
+This can represent a major speed increase for your queries but it also means that you will only have available the attributes
+you indexed in your model. There are edge cases that are not tested so please help us have this feature be super stable and
+have everyone bennefit from the speed this entails.
+
+Example:
+  
+    @very_long_sting = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+    Product.create(:name => @very_long_sting, :href => 'http://google.com' )
+    
+    @products = Product.search_tank('quis exercitation', :snippets => [:name], :fetch => [:href])
+    @products[0].name_snippet 
+    # => 'Ut enim ad minim veniam, <b>quis</b> nostrud <b>exercitation</b> ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla' 
+    @products[0].href
+    # => 'http://google.com'
+    @products[0].any_other_attribute
+    # => nil
+
+Notice that to get the snippeted value that Index Tank sends you get it via the '_snippet' method generated on the fly.
+
+The attributes that are requested to be fetched are set as attributes as new instances of your model objects and no Database Query is executed. NEAT!
+    
 == Geospatial Search Example
 
 IndexTank and the Tanker gem support native geographic calculations. All you need is to define two document variables with your latitude and your longitude

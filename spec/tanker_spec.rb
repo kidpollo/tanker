@@ -247,7 +247,7 @@ describe Tanker do
 
     it 'should be able to use multi-value query phrases' do
       Person.tanker_index.should_receive(:search).with(
-        /__any:\(hey! location_id:\(1\) location_id:\(2\)\)/,
+        'name:(hey! location_id:(1) location_id:(2)) OR last_name:(hey! location_id:(1) location_id:(2)) __type:("Person")',
         anything
       ).and_return({'results' => [], 'matches' => 0})
 
@@ -448,6 +448,43 @@ describe Tanker do
       person.delete_tank_indexes
     end
 
+    describe 'snippets' do
+      it 'should not call find method but instead create new instances the models matched the search with the snippetted fields as snippet_ attributes' do
+        Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"         =>  Person.new.it_doc_id,
+            'snippet_name'  => 'ped...',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        })
+
+        collection = Person.search_tank('hey!', :snippets => [:name])
+        collection[0].name_snippet.should == 'ped...'
+      end
+    end
+
+    describe 'fetch' do
+      it 'should not call find method but instead create new instances the models matched the search with the fetched fields as attributes' do
+        Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+            "docid"         =>  Person.new.it_doc_id,
+            'name'  => 'Osama',
+            "__type" => 'Person',
+            "__id"   => '1'
+          }],
+          "search_time" => 1
+        })
+
+        collection = Person.search_tank('terrorist', :fetch => [:name])
+        collection[0].name.should == 'Osama'
+      end
+    end
   end
 
   describe "Kaminari support" do
