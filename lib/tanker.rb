@@ -107,26 +107,15 @@ module Tanker
       search_on_fields = models.map{|model| model.tanker_config.indexes.map{|arr| arr[0]}.uniq}.flatten.uniq.join(":(#{query.to_s}) OR ")
       query = "#{search_on_fields}:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
 
-      ##query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
-      ##instantiated_results = instantiate_results(results)
-
-      ##paginate === false ? instantiated_results : paginate_results(instantiated_results, paginate, results['matches'])
-       
-      @entries = WillPaginate::Collection.create(page, per_page) do |pager|
-        # inject the result array into the paginated collection:
-        if (fetch || snippets)
-          pager.replace instantiate_results_from_results(results, fetch, snippets)
-        else
-          pager.replace instantiate_results_from_db(results)
-        end
-
-        unless pager.total_entries
-          # the pager didn't manage to guess the total count, do it manually
-          pager.total_entries = results["matches"]
-        end
+      
+      instantiated_results = if (fetch || snippets)
+        instantiate_results_from_results(results, fetch, snippets)
+      else
+        instantiate_results_from_db(results)
       end
+      paginate === false ? instantiated_results : paginate_results(instantiated_results, paginate, results['matches'])
     end
 
     protected
@@ -146,7 +135,7 @@ module Tanker
         id_map.each do |klass, ids|
           # replace the id list with an eager-loaded list of records for this model
           id_map[klass] = constantize(klass).find(ids)
-        end.values.flatten
+        end
         # return them in order
         results.map do |result|
           model, id = result["__type"], result["__id"]
@@ -168,6 +157,8 @@ module Tanker
         else
           raise(BadConfiguration, "Unknown pagination backend")
         end
+      end
+
       def instantiate_results_from_results(index_result, fetch = false, snippets = false)
         results = index_result['results']
         return [] if results.empty?

@@ -1,49 +1,79 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'integration_spec_conf'))
 
-class Product
+require 'active_record'
+require 'sqlite3'
+require 'logger'
+
+FileUtils.rm( 'data.sqlite3' ) rescue nil
+ActiveRecord::Base.logger = Logger.new(STDOUT)
+ActiveRecord::Base.establish_connection(
+    'adapter' => 'sqlite3',
+    'database' => 'data.sqlite3',
+    'pool' => 5,
+    'timeout' => 5000
+)
+
+ActiveRecord::Schema.define do
+  create_table :products do |t|
+    t.string :name    
+    t.string :href
+    t.string :tags
+  end
+end
+
+class Product < ActiveRecord::Base
   include Tanker
 
   tankit 'tanker_integration_tests' do
     indexes :name
     indexes :href
-    indexes :tags
-  end
-
-  attr_accessor :name, :href, :tags
-
-  def initialize(options = {})
-    @name = options[:name]
-    @href = options[:href]
-    @tags = options[:tags]
-  end
-
-  def id
-    @id ||= self.class.throwaway_id
-  end
-  
-  def id=(val)
-    @id = val
-  end
-   
-  class << self
-    def create(options)
-      self.new(options)
-    end
-
-    def throwaway_id
-      @throwaway_id = (@throwaway_id ? @throwaway_id + 1 : 0)
-    end
-
-    def all
-      ObjectSpace.each_object(self)
-    end
-
-    def find(ids)
-      all.select{|instance| ids.include?(instance.id) }
-    end
   end
 end
+
+#class Product
+#  include Tanker
+
+#  tankit 'tanker_integration_tests' do
+#    indexes :name
+#    indexes :href
+#    indexes :tags
+#  end
+
+#  attr_accessor :name, :href, :tags
+
+#  def initialize(options = {})
+#    @name = options[:name]
+#    @href = options[:href]
+#    @tags = options[:tags]
+#  end
+
+#  def id
+#    @id ||= self.class.throwaway_id
+#  end
+#  
+#  def id=(val)
+#    @id = val
+#  end
+#   
+#  class << self
+#    def create(options)
+#      self.new(options)
+#    end
+#
+#    def throwaway_id
+#      @throwaway_id = (@throwaway_id ? @throwaway_id + 1 : 0)
+#    end
+#
+#    def all
+#      ObjectSpace.each_object(self)
+#    end
+#
+#    def find(ids)
+#      all.select{|instance| ids.include?(instance.id.to_s) }
+#    end
+#  end
+#end
 
 describe 'Tanker integration tests with IndexTank' do
 
