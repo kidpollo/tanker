@@ -188,12 +188,6 @@ module Tanker
         instances
       end
 
-      def constantize(klass_name)
-        Object.const_defined?(klass_name) ?
-        Object.const_get(klass_name) :
-        Object.const_missing(klass_name)
-      end
-
       # borrowed from Rails' ActiveSupport::Inflector
       def constantize(camel_cased_word)
         names = camel_cased_word.split('::')
