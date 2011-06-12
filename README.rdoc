@@ -139,12 +139,12 @@ Disable pagination of search results
 
 == Fetching attributes and snippets
 
-As of version 1.1 Tanker supports fetching attributes and snippets directly from the Index. If you use either of this search options
+As of version 1.1 Tanker supports fetching attributes and snippets directly from the Index. If you use either of these search options
 your Model instances will be instanced from the attributes coming from the index not by making another trip to the database.
 
 This can represent a major speed increase for your queries but it also means that you will only have available the attributes
 you indexed in your model. There are edge cases that are not tested so please help us have this feature be super stable and
-have everyone bennefit from the speed this entails.
+have everyone benefit from the speed this entails.
 
 Example:
   
