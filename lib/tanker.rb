@@ -232,7 +232,7 @@ module Tanker
 
         self.tanker_config.index_name = name
 
-        config = ModelConfig.new(name, block)
+        config = ModelConfig.new(name, {}, block)
         config.indexes.each do |key, value|
           self.tanker_config.indexes << [key, value]
         end
@@ -286,7 +286,7 @@ module Tanker
     attr_accessor :index_name
     attr_accessor :options
 
-    def initialize(index_name, options = {}, block)
+    def initialize(index_name, options, block)
       @index_name = index_name
       @options    = options
       @indexes    = []
