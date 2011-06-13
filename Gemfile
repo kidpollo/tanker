@@ -7,7 +7,6 @@ gem 'kaminari'
 
 group :test do 
   gem 'rspec', '>= 2.5.0'
-  gem 'ruby-debug19'
   gem 'activerecord', '>= 3.0.7'
   gem 'sqlite3'
 end

@@ -9,8 +9,9 @@ module Tanker
 
     attr_reader :limit_value, :offset_value, :total_count
 
-    def initialize(original_array, limit_val = default_per_page, offset_val, total_count)
-      @limit_value, @offset_value, @total_count = limit_val, offset_val, total_count
+    def initialize(original_array, limit_val, offset_val, total_count)
+      @limit_value = limit_val || default_per_page
+      @offset_value, @total_count = offset_val, total_count
       super(original_array)
     end
 
