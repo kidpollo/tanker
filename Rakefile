@@ -9,9 +9,8 @@ begin
     gem.description = %Q{IndexTank is a great search indexing service, this gem tries to make any orm keep in sync with indextank with ease}
     gem.email = "kidpollo@gmail.com"
     gem.homepage = "http://github.com/kidpollo/tanker"
-    gem.authors = ["@kidpollo", "Jack Danger Canty"]
-    #gem.add_development_dependency "rspec", ">= 2.0.0.beta.22"
-    #gem.add_dependency 'will_paginate', '>= 2.3.15'
+    gem.authors = ["Francisco Viramontes", "Jack Danger Canty"]
+    gem.files.exclude 'spec/integration_spec.rb'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new

@@ -105,7 +105,8 @@ describe Tanker do
       end
 
       dummy_instance = @dummy_class.new
-      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.should == [:something, :something_else]
+      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:something).should == true       
+      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:something_else).should == true
     end
 
     it 'should overwrite previously indexed fields if re-indexed' do
@@ -176,7 +177,8 @@ describe Tanker do
 
       dummy_instance = dummy_class.new
       dummy_instance.tanker_config.index_name.should == 'another index'
-      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.should == [:name, :email]
+      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:name).should == true
+      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:email).should == true
 
       Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
     end
