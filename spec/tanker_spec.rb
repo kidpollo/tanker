@@ -500,9 +500,9 @@ describe Tanker do
     end
 
     # Need to do this for tests to pass on 1.8.7. If not tanker.rb is
-    # reloaded Tanker::KaminariPaginatedArray const gets removed (!?)
+    # reloaded Tanker::Pagination::Kaminari const gets removed (!?)
     before :each do
-      load 'tanker.rb'
+      load 'tanker/pagination.rb'
     end
 
     it 'should raise error message if Kaminari gem is not required' do
