@@ -9,7 +9,6 @@ end
 require 'indextank_client'
 require 'tanker/configuration'
 require 'tanker/utilities'
-require 'will_paginate/collection'
 
 if defined? Rails
   begin
@@ -28,7 +27,7 @@ module Tanker
   autoload :Configuration, 'tanker/configuration'
   extend Configuration
 
-  autoload :KaminariPaginatedArray, 'tanker/paginated_array'
+  autoload :Pagination, 'tanker/pagination'
 
   class << self
     attr_reader :included_in
@@ -101,26 +100,26 @@ module Tanker
 
       # fetch values from index tank or just the type and id to instace results localy
       options[:fetch]   =  "__type,__id"
-      options[:fetch]   += ",#{fetch.join(',')}" if fetch 
+      options[:fetch]   += ",#{fetch.join(',')}" if fetch
       options[:snippet] = snippets.join(',') if snippets
-      
+
       search_on_fields = models.map{|model| model.tanker_config.indexes.map{|arr| arr[0]}.uniq}.flatten.uniq.join(":(#{query.to_s}) OR ")
       query = "#{search_on_fields}:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
 
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
-      
+
       instantiated_results = if (fetch || snippets)
         instantiate_results_from_results(results, fetch, snippets)
       else
         instantiate_results_from_db(results)
       end
-      paginate === false ? instantiated_results : paginate_results(instantiated_results, paginate, results['matches'])
+      paginate === false ? instantiated_results : Pagination.create(instantiated_results, results['matches'], paginate)
     end
 
     protected
 
-      def instantiate_results_from_db(index_result) 
+      def instantiate_results_from_db(index_result)
         results = index_result['results']
         return [] if results.empty?
 
@@ -131,7 +130,7 @@ module Tanker
           acc[model] << id
           acc
         end
-        
+
         id_map.each do |klass, ids|
           # replace the id list with an eager-loaded list of records for this model
           id_map[klass] = constantize(klass).find(ids)
@@ -143,26 +142,10 @@ module Tanker
         end
       end
 
-      def paginate_results(results, pagination_options, total_hits)
-        case Tanker.configuration[:pagination_backend]
-        when :will_paginate
-          WillPaginate::Collection.create(pagination_options[:page],
-                                          pagination_options[:per_page],
-                                          total_hits) { |pager| pager.replace results }
-        when :kaminari
-          Tanker::KaminariPaginatedArray.new(results,
-                                             pagination_options[:per_page],
-                                             pagination_options[:page]-1,
-                                             total_hits)
-        else
-          raise(BadConfiguration, "Unknown pagination backend")
-        end
-      end
-
       def instantiate_results_from_results(index_result, fetch = false, snippets = false)
         results = index_result['results']
         return [] if results.empty?
-        instances = []   
+        instances = []
         id_map = results.inject({}) do |acc, result|
           model = result["__type"]
           instance = constantize(model).new()
