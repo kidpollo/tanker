@@ -1,7 +1,6 @@
 begin
   require "rubygems"
   require "bundler"
-  require "awesome_print"
 
   Bundler.setup :default
 rescue => e
@@ -105,33 +104,9 @@ module Tanker
       options[:snippet] = snippets.join(',') if snippets
 
       search_on_fields = models.map{|model| model.tanker_config.indexes.map{|arr| arr[0]}.uniq}.flatten.uniq.join(":(#{query.to_s}) OR ")
-      
-      # original
-      # query = "#{search_on_fields}:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
-      # => "name:(hey! location_id:(1) location_id:(2)) OR last_name:(hey! location_id:(1) location_id:(2)) __type:(\"Person\")" 
-      
-      
-      # fix
+
       query = "#{search_on_fields}:(#{query.to_s}) OR __any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
-      # => "name:(hey! location_id:(1) location_id:(2)) OR last_name:(hey! location_id:(1) location_id:(2)) OR __any:(hey! location_id:(1) location_id:(2)) __type:(\"Person\")"
-
-
-      # => "name:(hey! location_id:(1) location_id:(2)) OR last_name:(hey! location_id:(1) location_id:(2)) __type:(\"Person\")" 
-      # => "name:(hey! location_id:(1) location_id:(2)) OR last_name:(hey! location_id:(1) location_id:(2)) OR __any:(hey! location_id:(1) location_id:(2)) __type:(\"Person\")"
-
-
-
-
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
-      
-      puts "!A"*88
-      ap query
-      puts 
-      puts 
-      puts 
-      ap options
-      puts "!B"*88
-      
       results = index.search(query, options)
 
       instantiated_results = if (fetch || snippets)

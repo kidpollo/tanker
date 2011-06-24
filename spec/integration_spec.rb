@@ -94,7 +94,7 @@ describe 'Tanker integration tests with IndexTank' do
         (@results - [@catapult, @tnt, @cat]).should be_empty
         @results[0].id.should_not be_nil
       end
-  
+
       it 'should find all catapults' do
         @results = Product.search_tank('catapult')
         (@results - [@catapult]).should be_empty
@@ -105,19 +105,19 @@ describe 'Tanker integration tests with IndexTank' do
         (@results - [@catapult, @cat]).should be_empty
       end
     end
-    
+
     describe 'advanced searching' do
       it 'should search multiple words from the same field' do
         @results = Product.search_tank('Acme catapult')
         @results.should include(@catapult)
       end
-      
+
       it "should search across multiple fields" do
         @results = Product.search_tank('catapult google')
         @results.should include(@catapult)
       end
     end
-    
+
     describe 'filtering dogs' do
 
       before(:all) do
