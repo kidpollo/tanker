@@ -80,9 +80,9 @@ describe 'Tanker integration tests with IndexTank' do
   before(:all) do 
     Tanker::Utilities.clear_index('tanker_integration_tests')
     
-    @catapult = Product.create(:name => 'Acme catapult')
-    @tnt      = Product.create(:name => 'Acme TNT')
-    @cat      = Product.create(:name => 'Acme cat')
+    @catapult = Product.create(:name => 'Acme catapult', :href => "google", )
+    @tnt      = Product.create(:name => 'Acme TNT', :href => "groupon", )
+    @cat      = Product.create(:name => 'Acme cat', :href => "amazon", )
       
     Product.tanker_reindex
   end
@@ -105,7 +105,19 @@ describe 'Tanker integration tests with IndexTank' do
         (@results - [@catapult, @cat]).should be_empty
       end
     end
-   
+    
+    describe 'advanced searching' do
+      it 'should search multiple words from the same field' do
+        @results = Product.search_tank('Acme catapult')
+        @results.should include(@catapult)
+      end
+      
+      it "should search across multiple fields" do
+        @results = Product.search_tank('catapult google')
+        @results.should include(@catapult)
+      end
+    end
+    
     describe 'filtering dogs' do
 
       before(:all) do
