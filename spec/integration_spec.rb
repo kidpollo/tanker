@@ -16,9 +16,10 @@ ActiveRecord::Base.establish_connection(
 
 ActiveRecord::Schema.define do
   create_table :products do |t|
-    t.string :name    
+    t.string :name
     t.string :href
     t.string :tags
+    t.text :description
   end
 end
 
@@ -28,168 +29,262 @@ class Product < ActiveRecord::Base
   tankit 'tanker_integration_tests' do
     indexes :name
     indexes :href
+    indexes :tags
+    indexes :description
   end
 end
 
-#class Product
-#  include Tanker
+describe 'An imaginary store' do
 
-#  tankit 'tanker_integration_tests' do
-#    indexes :name
-#    indexes :href
-#    indexes :tags
-#  end
+  before(:all) do
 
-#  attr_accessor :name, :href, :tags
-
-#  def initialize(options = {})
-#    @name = options[:name]
-#    @href = options[:href]
-#    @tags = options[:tags]
-#  end
-
-#  def id
-#    @id ||= self.class.throwaway_id
-#  end
-#  
-#  def id=(val)
-#    @id = val
-#  end
-#   
-#  class << self
-#    def create(options)
-#      self.new(options)
-#    end
-#
-#    def throwaway_id
-#      @throwaway_id = (@throwaway_id ? @throwaway_id + 1 : 0)
-#    end
-#
-#    def all
-#      ObjectSpace.each_object(self)
-#    end
-#
-#    def find(ids)
-#      all.select{|instance| ids.include?(instance.id.to_s) }
-#    end
-#  end
-#end
-
-describe 'Tanker integration tests with IndexTank' do
-
-  before(:all) do 
+    # Move everything into one giant before all block. Perviously, it seems, model instances were leaking between 
+    # tests since products were being created in different contexts for different tests. But it was difficult to 
+    # identify the problem since we were reseting the indexes after each set of tests. This is better, I think. All
+    # the products are created in one place. It makes it easier to know what products exist at any given time. Also
+    # it gives us a robost set of dummy data at at once, so writing additional tests against a rich setup is super 
+    # cheap.
+    # 
     Tanker::Utilities.clear_index('tanker_integration_tests')
-    
-    @catapult = Product.create(:name => 'Acme catapult', :href => "google", )
-    @tnt      = Product.create(:name => 'Acme TNT', :href => "groupon", )
-    @cat      = Product.create(:name => 'Acme cat', :href => "amazon", )
-      
+
+    # Google products
+    @blackberry = Product.create(:name => 'blackberry', :href => "google", :tags => ['decent', 'businessmen love it'])
+    @nokia = Product.create(:name => 'nokia', :href => "google", :tags => ['decent'])
+
+    # Amazon products
+    @android = Product.create(:name => 'android', :href => "amazon", :tags => ['awesome'])
+    @samsung = Product.create(:name => 'samsung', :href => "amazon", :tags => ['decent'])
+    @motorola = Product.create(:name => 'motorola', :href => "amazon", :tags => ['decent'],
+      :description => "Not sure about features since I've never owned one.")
+
+    # Ebay products
+    @palmpre = Product.create(:name => 'palmpre', :href => "ebay", :tags => ['discontinued', 'worst phone ever'])
+    @palm_pixi_plus = Product.create(:name => 'palm pixi plus', :href => "ebay", :tags => ['terrible'])
+    @lg_vortex = Product.create(:name => 'lg vortex', :href => "ebay", :tags => ['decent'])
+    @t_mobile = Product.create(:name => 't mobile', :href => "ebay", :tags => ['terrible'])
+
+    # Yahoo products
+    @htc = Product.create(:name => 'htc', :href => "yahoo", :tags => ['decent'])
+    @htc_evo = Product.create(:name => 'htc evo', :href => "yahoo", :tags => ['decent'])
+    @ericson = Product.create(:name => 'ericson', :href => "yahoo", :tags => ['decent'])
+
+    # Apple products
+    @iphone = Product.create(:name => 'iphone', :href => "apple", :tags => ['awesome', 'poor reception'], 
+      :description => 'Puts even more features at your fingertips')
+
+    @products_in_database = Product.all
+
     Product.tanker_reindex
   end
 
-  context 'An imaginary store' do
-    describe 'basic searching' do
-      it 'should find all Acme products' do
-        @results = Product.search_tank('Acme')
-        (@results - [@catapult, @tnt, @cat]).should be_empty
-        @results[0].id.should_not be_nil
-      end
+  describe 'basic searching' do
 
-      it 'should find all catapults' do
-        @results = Product.search_tank('catapult')
-        (@results - [@catapult]).should be_empty
-      end
-
-      it 'should find all things cat' do
-        @results = Product.search_tank('cat')
-        (@results - [@catapult, @cat]).should be_empty
-      end
+    it 'should find all amazon products' do
+      results = Product.search_tank('amazon')
+      results.should include(@android, @samsung, @motorola)
+      results.should have_exactly(3).products
     end
 
-    describe 'advanced searching' do
-      it 'should search multiple words from the same field' do
-        @results = Product.search_tank('Acme catapult')
-        @results.should include(@catapult)
-      end
-
-      it "should search across multiple fields" do
-        @results = Product.search_tank('catapult google')
-        @results.should include(@catapult)
-      end
+    it 'should find the iphone' do
+      results = Product.search_tank('iphone')
+      results.should include(@iphone)
+      results.should have_exactly(1).product
     end
 
-    describe 'filtering dogs' do
-
-      before(:all) do
-        @doggie_1 = Product.create(:name => 'doggie 1', :tags => ['puppuy', 'pug'] )
-        @doggie_2 = Product.create(:name => 'doggie 2', :tags => ['pug'] )
-        @doggie_3 = Product.create(:name => 'doggie 3', :tags => ['puppuy', 'yoirkie'] )
-        Product.tanker_reindex
-      end
-
-      after(:all) do
-        @doggie_1.delete_tank_indexes 
-        @doggie_2.delete_tank_indexes 
-        @doggie_3.delete_tank_indexes 
-      end
-
-      it 'should filter by puppy tags' do
-        @results = Product.search_tank('doggie', :conditions => {:tags => 'puppy'})
-        (@results - [@doggie_1, @doggie_3]).should be_empty
-      end
-
-      it 'should not search for doggie_3' do
-        @results = Product.search_tank('doggie', :conditions => {:tags => 'puppy', '-name' => 'doggie_3'})
-        (@results - [@doggie_1]).should be_empty
-
-        @results = Product.search_tank('doggie', :conditions => {:tags => 'puppy', 'NOT name' => 'doggie_3'})
-        (@results - [@doggie_1]).should be_empty
-
-        @results = Product.search_tank('doggie NOT doggie_3', :conditions => {:tags => 'puppy'} )
-        (@results - [@doggie_1]).should be_empty
-      end
+    it 'should find all "palm" phones' do
+      pending("Bug: Partial word search doesn't work. Did it ever work? Should this be the default behavior?")
+      
+      # This test was a false pass due to the way we were testing contents of arrays:
+      # 
+      #   @catapult = Product.create(:name => 'Acme catapult', :href => "google")
+      #   @tnt = Product.create(:name => 'Acme TNT', :href => "groupon")
+      #   @cat = Product.create(:name => 'Acme cat', :href => "amazon")
+      # 
+      #   @results = Product.search_tank('cat')
+      #   (@results - [@catapult, @cat]).should be_empty
+      # 
+      # This is no good. It will pass even if @cat, @catapult, or both are missing the
+      # @results array. We need to do this instead:
+      # 
+      results = Product.search_tank('palm')
+      results.should include(@palm, @palm_pixi_plus)
+      results.should have_exactly(2).products
     end
 
-    describe 'snippets and fetching data' do 
-      before(:all) do
-        @prod_1 = Product.create(:name => 'something small')
-        @very_long_sting = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-        @prod_2 = Product.create(:name => @very_long_sting, :href => 'http://google.com' )
-        @prod_3 = Product.create(:name => 'product with tags', :tags => ['oneword', 'two words'])
-        Product.tanker_reindex
-      end
+    it 'should search multiple words from the same field' do
+      results = Product.search_tank('palm pixi plus')
+      results.should include(@palm_pixi_plus)
+      results.should have_exactly(1).product
+    end
 
-      after(:all) do
-        @prod_1.delete_tank_indexes 
-        @prod_2.delete_tank_indexes 
-        @prod_3.delete_tank_indexes 
-      end
-     
-      it 'should fetch attribute requested from Index Tank and create an intstance of the Model without calling the database' do
-        @results = Product.search_tank('something', :fetch => [:name])
-        @results.count.should == 1
-        
-        @new_prod_instance = @results[0]
-        @new_prod_instance.name.should == 'something small'
-      end
+    it "should narrow the results by searching across multiple fields" do
+      results = Product.search_tank('apple iphone')
+      results.should include(@iphone)
+      results.should have(1).product
+    end
 
-      it 'should get a snippet for an attribute requested from Index Tank and create an intstance of the Model without calling the database and with a _snippet attribute reader' do
-        @results = Product.search_tank('product', :snippets => [:name])
-        @results.count.should == 1
-       
-        @new_prod_instance = @results[0]
-        @new_prod_instance.name_snippet.should =~ /<b>product<\/b>/
-      end
-
-      it 'should create a new instance of a model and fetch attributes that where requested and get snippets for the attributes required as snippets' do 
-        @results = Product.search_tank('quis exercitation', :snippets => [:name], :fetch => [:href])
-        @results.count.should == 1
-        
-        @new_prod_instance = @results[0]
-        @new_prod_instance.name_snippet.should =~ /<b>quis<\/b>/
-        @new_prod_instance.href.should == 'http://google.com'
-      end
-    end   
+    it "should serach case insensitively" do
+      results = Product.search_tank('IPHONE')
+      results.should include(@iphone)
+      results.should have(1).product
+    end
   end
+
+  describe 'searching by tag' do
+
+    # These tests were mostly bunk due to misspelling of the word 'puppy'. In the before block:
+    # 
+    #   @doggie_1 = Product.create(:name => 'doggie 1', :tags => ['puppuy', 'pug'] )
+    #   @doggie_2 = Product.create(:name => 'doggie 2', :tags => ['pug'] )
+    #   @doggie_3 = Product.create(:name => 'doggie 3', :tags => ['puppuy', 'yoirkie'] )
+    # 
+    # But in the tests:
+    # 
+    #   @results = Product.search_tank('doggie', :conditions => {:tags => 'puppy'})
+    # 
+    # So results was actually returning an empty array. But because we weren't correctly testing
+    # the contents of arrays...
+    # 
+    #   (@results - [@doggie_1, @doggie_3]).should be_empty
+    # 
+    # ...we were getting false passes.
+    # 
+
+    it 'should find all "awesome" products regardless of other attributes' do
+      results = Product.search_tank('', :conditions => {:tags => 'awesome'})
+      results.should include(@android, @iphone)
+      results.should have_exactly(2).products
+    end
+
+    it 'should find all "decent" products sold by amazon' do
+      results = Product.search_tank('amazon', :conditions => {:tags => 'decent'})
+      results.should include(@samsung, @motorola)
+      results.should have_exactly(2).products
+    end
+
+    it 'should find all "terrible" or "discontinued" products sold by ebay' do
+      results = Product.search_tank('ebay', :conditions => {:tags => 'terrible OR discontinued'})
+      results.should include(@t_mobile, @palmpre, @palm_pixi_plus)
+      results.should have_exactly(3).products
+    end
+
+    it 'should find products tagged as "discontinued" and "worst phone ever" sold by ebay' do
+      results = Product.search_tank('ebay', :conditions => {:tags => ['discontinued', 'worst phone ever']})
+      results.should include(@palmpre)
+      results.should have_exactly(1).product
+    end
+  end
+
+  describe "negative search conditions" do
+
+    # These tests were also bunk for the same reason listed above.
+    # 
+    it 'should find all "awesome" products excluding those sold by apple' do
+      results = Product.search_tank('awesome', :conditions => {'-href' => 'apple'})
+      results.should include(@android)
+      results.should have_exactly(1).product
+    end
+
+    it 'should find all "awesome" products excluding those sold by apple (using alternate syntax)' do
+      results = Product.search_tank('awesome', :conditions => {'NOT href' => 'apple'})
+      results.should include(@android)
+      results.should have_exactly(1).product
+    end
+
+    it 'should find all "decent" products excluding those sold by apple (using alternate syntax)' do
+      results = Product.search_tank('awesome', :conditions => {'NOT href' => 'apple'})
+      results.should include(@android)
+      results.should have_exactly(1).product
+    end
+
+    it 'should find the "htc" but not the "htc evo"' do
+      results = Product.search_tank('htc NOT evo')
+      results.should include(@htc)
+      results.should have_exactly(1).product
+    end
+  end
+
+  describe "fetching products (as opposed to searching)" do
+
+    before { @results = Product.search_tank('apple', :fetch => [:name]) }
+
+    it 'should find all "apple" products' do
+      @results.should have_exactly(1).product
+    end
+
+    it "should set values only for the fetched attributes" do
+      @results.first.name.should == 'iphone'
+    end
+
+    it "should set any non-fetched attributes to nil" do
+      @results.first.href.should be_nil
+      @results.first.tags.should be_nil
+    end
+
+    it "should build results from the index without touching the database" do
+      @products_in_database.should_not include(@results)
+    end
+  end
+
+  describe "searching snippets" do
+    before(:all) { @results = Product.search_tank('features', :snippets => [:description]) }
+
+    it 'should find snippets for any product with "features" in the description' do
+      @results.should have_exactly(2).products # motorola and iphone
+    end
+
+    it "should build results from the index without touching the database" do
+      @products_in_database.should_not include(@results)
+    end
+
+    it 'should dynamically create an "<attribute>_snippet" method for each result' do
+      @results.each { |r| r.should respond_to(:description_snippet) }
+    end
+
+    it 'should return a snippet for iphone' do
+      pending("Bug: Why is this being overwritten by the motorola snippet?")
+      snippets = @results.map(&:description_snippet)
+      snippets.should include("Puts even more <b>features</b> at your fingertips")
+    end
+
+    it 'should return a snippet for motorola' do
+      snippets = @results.map(&:description_snippet)
+      snippets.should include("Not sure about <b>features</b> since I've never owned one")
+    end
+  end
+
+  describe "searching snippets while also fetching specific attributes" do
+    before :all do 
+      @results = Product.search_tank('features', :snippets => [:description], :fetch => [:name, :href])
+      @indexed_iphone = @results.detect { |r| r.name == 'iphone' }
+      @indexed_motorola = @results.detect { |r| r.name == 'motorola' }
+    end
+
+    it 'should find any product with "features" in the description' do
+      @results.should include(@indexed_motorola, @indexed_iphone)
+      @results.should have_exactly(2).products
+    end
+
+    it "should build results from the index without touching the database" do
+      @products_in_database.should_not include(@results)
+    end
+
+    it 'should set the "name" attribute for all results' do
+      @indexed_motorola.name.should == 'motorola'
+      @indexed_iphone.name.should == 'iphone'
+    end
+
+    it 'should set the "href" attribute for all results' do
+      @indexed_motorola.href.should == 'amazon'
+      @indexed_iphone.href.should == 'apple'
+    end
+
+    it 'should set the "description_snippet" attribute for all results' do
+      pending("Bug: Fails for the same reason as previous test. Snippets are being overwritten.")
+      @indexed_motorola.description_snippet.should == "Not sure about <b>features</b> since I've never owned one"
+      @indexed_iphone.description_snippet.should == "Puts even more <b>features</b> at your fingertips"
+    end
+  end
+  
 end
 
