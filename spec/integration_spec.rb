@@ -242,7 +242,6 @@ describe 'An imaginary store' do
     end
 
     it 'should return a snippet for iphone' do
-      pending("Bug: Why is this being overwritten by the motorola snippet?")
       snippets = @results.map(&:description_snippet)
       snippets.should include("Puts even more <b>features</b> at your fingertips")
     end
@@ -280,7 +279,6 @@ describe 'An imaginary store' do
     end
 
     it 'should set the "description_snippet" attribute for all results' do
-      pending("Bug: Fails for the same reason as previous test. Snippets are being overwritten.")
       @indexed_motorola.description_snippet.should == "Not sure about <b>features</b> since I've never owned one"
       @indexed_iphone.description_snippet.should == "Puts even more <b>features</b> at your fingertips"
     end

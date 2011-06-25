@@ -349,10 +349,9 @@ module Tanker
 
     #dynamically create a snippet read attribute (method)
     def create_snippet_attribute(key, value)
-      # the method name should something_snippet not snippet_something as the api returns it
-      self.class.send(:define_method,  "#{key.match(/snippet_(\w+)/)[1]}_snippet") do
-        value
-      end
+      # method name should something_snippet not snippet_something as the api returns it
+      method_name = "#{key.match(/snippet_(\w+)/)[1]}_snippet"
+      (class << self; self end).send(:define_method, method_name) { value }
     end
 
     def tanker_index_options
