@@ -37,14 +37,6 @@ end
 describe 'An imaginary store' do
 
   before(:all) do
-
-    # Move everything into one giant before all block. Perviously, it seems, model instances were leaking between 
-    # tests since products were being created in different contexts for different tests. But it was difficult to 
-    # identify the problem since we were reseting the indexes after each set of tests. This is better, I think. All
-    # the products are created in one place. It makes it easier to know what products exist at any given time. Also
-    # it gives us a robost set of dummy data at at once, so writing additional tests against a rich setup is super 
-    # cheap.
-    # 
     Tanker::Utilities.clear_index('tanker_integration_tests')
 
     # Google products
@@ -91,23 +83,9 @@ describe 'An imaginary store' do
       results.should have_exactly(1).product
     end
 
-    it 'should find all "palm" phones' do
-      pending("Bug: Partial word search doesn't work. Did it ever work? Should this be the default behavior?")
-      
-      # This test was a false pass due to the way we were testing contents of arrays:
-      # 
-      #   @catapult = Product.create(:name => 'Acme catapult', :href => "google")
-      #   @tnt = Product.create(:name => 'Acme TNT', :href => "groupon")
-      #   @cat = Product.create(:name => 'Acme cat', :href => "amazon")
-      # 
-      #   @results = Product.search_tank('cat')
-      #   (@results - [@catapult, @cat]).should be_empty
-      # 
-      # This is no good. It will pass even if @cat, @catapult, or both are missing the
-      # @results array. We need to do this instead:
-      # 
-      results = Product.search_tank('palm')
-      results.should include(@palm, @palm_pixi_plus)
+    it 'should find all "palm" phones with wildcard word search' do
+      results = Product.search_tank('palm*')
+      results.should include(@palmpre, @palm_pixi_plus)
       results.should have_exactly(2).products
     end
 
@@ -131,25 +109,6 @@ describe 'An imaginary store' do
   end
 
   describe 'searching by tag' do
-
-    # These tests were mostly bunk due to misspelling of the word 'puppy'. In the before block:
-    # 
-    #   @doggie_1 = Product.create(:name => 'doggie 1', :tags => ['puppuy', 'pug'] )
-    #   @doggie_2 = Product.create(:name => 'doggie 2', :tags => ['pug'] )
-    #   @doggie_3 = Product.create(:name => 'doggie 3', :tags => ['puppuy', 'yoirkie'] )
-    # 
-    # But in the tests:
-    # 
-    #   @results = Product.search_tank('doggie', :conditions => {:tags => 'puppy'})
-    # 
-    # So results was actually returning an empty array. But because we weren't correctly testing
-    # the contents of arrays...
-    # 
-    #   (@results - [@doggie_1, @doggie_3]).should be_empty
-    # 
-    # ...we were getting false passes.
-    # 
-
     it 'should find all "awesome" products regardless of other attributes' do
       results = Product.search_tank('', :conditions => {:tags => 'awesome'})
       results.should include(@android, @iphone)
@@ -177,8 +136,6 @@ describe 'An imaginary store' do
 
   describe "negative search conditions" do
 
-    # These tests were also bunk for the same reason listed above.
-    # 
     it 'should find all "awesome" products excluding those sold by apple' do
       results = Product.search_tank('awesome', :conditions => {'-href' => 'apple'})
       results.should include(@android)
