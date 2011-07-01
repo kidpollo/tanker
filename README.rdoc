@@ -115,6 +115,11 @@ Search Topics
     @topics = Topic.search_tank('blah',  :conditions => {:tag_list => 'tag1'}) # Gets 2 results!
     @topics = Topic.search_tank('blah',  :conditions => {:title => 'Awesome', :tag_list => 'tag1'}) # Gets 1 result!
 
+Search with wildcards!
+
+    @topics = Topic.search_tank('Awe*', :page => 1, :per_page => 10) # Gets 1 result!
+    @topics = Topic.search_tank('*ic', :page => 1, :per_page => 10) # Gets 3 results!
+
 Search multiple models
 
     @results = Tanker.search([Topic, Post], 'blah') # Gets any Topic OR Post results that match!
@@ -333,11 +338,6 @@ Or you can restrict indexing to a subset of records. This is particularly helpfu
 
     Model.tanker_reindex(:batch_size => 1000, :scope => :not_deleted) # will call Model.not_deleted.all internally
 
-
-== TODO
-* Documentation
-* More fancy stuff (Suggestions?)
-
 == Note on Patches/Pull Requests
  
 * Fork the project.
@@ -348,18 +348,34 @@ Or you can restrict indexing to a subset of records. This is particularly helpfu
   (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
 
+== Note on testing
+
+Tanker is has a full suite of unit tests that cover configuration and the api of the library but it also inludes a battery of Integration tests! 
+These tests spec the behabiero between  Index Tank and an ActiveRecord model with a Sqlite3 Backend.
+
+If you want to run the specs you will need to provide an Index Tank Api key and user in the +spec/integration_spec_conf.rb+ file. 
+This file is ignored from the repo but you'll find an example file in the same path.
 
 == Acknowledgements
 The gem is based on a couple of projects:
 
-*{redis-textsearch}[http://github.com/nateware/redis-textsearch]
-*{mongomapper}[http://github.com/jnunemaker/mongomapper]
-*{thinkingtank}[http://github.com/flaptor/thinkingtank]
-*{will_paginate}[http://github.com/mislav/will_paginate]
+* {redis-textsearch}[http://github.com/nateware/redis-textsearch]
+* {mongomapper}[http://github.com/jnunemaker/mongomapper]
+* {thinkingtank}[http://github.com/flaptor/thinkingtank]
+* {will_paginate}[http://github.com/mislav/will_paginate]
 
 Kudos to this awesome projects and developers
 
+There is a growing list of colabrators to this Gem so I would briefly mention them so if you know them and use this gem buy them a beer!
+
+* {@JackDanger}[http://github.com/JackDanger]
+* {@edgarjs}[http://github.com/edgarjs]
+* {@slothbear}[http://github.com/slothbear]
+* {@dabit}[http://github.com/dabit]
+* {@coryschires}[http://github.com/coryschires]
+* {@arvida}[http://github.com/arvida]
+* {@joeljunstrom}[http://github.com/joeljunstrom]
 
 == Copyright
 
-Copyright (c) 2010 @kidpollo. See LICENSE for details.
+Copyright (c) 2011 @kidpollo. See LICENSE for details.
