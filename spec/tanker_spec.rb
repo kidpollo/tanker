@@ -60,9 +60,31 @@ describe Tanker do
       @dummy_class.send(:tankit, 'dummy index') do
         indexes :field
       end
-
+       
       dummy_instance = @dummy_class.new
       dummy_instance.tanker_config.indexes.any? {|field, block| field == :field }.should == true
+    end
+
+    it 'should allow set category values for indexable fields inline' do
+      @dummy_class.send(:tankit, 'dummy index') do
+        indexes :category, :category => true
+      end
+      
+      dummy_instance = @dummy_class.new
+      dummy_instance.tanker_config.categories.any? {|field, block| field == :category }.should == true
+    end
+
+    it 'should allow set category values for indexable fields from dynamic attributes' do
+      @dummy_class.send(:tankit, 'dummy index') do
+        indexes :category, :category => true
+        category :category_2 do
+          'blah'
+        end 
+      end
+      
+      dummy_instance = @dummy_class.new
+      dummy_instance.tanker_config.categories.any? {|field, block| field == :category }.should == true
+      dummy_instance.tanker_config.categories.any? {|field, block| field == :category_2 }.should == true
     end
 
     it 'should allow blocks for indexable field data' do

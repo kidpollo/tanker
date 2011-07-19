@@ -64,10 +64,16 @@ or
         indexes :content
         indexes :id
         indexes :tag_list #NOTICE this is an array of Tags! Awesome!
+        indexes :category, :category => true # make attributes also be categories (facets)
 
         # you may also dynamically retrieve field data
         indexes :author_names do
           authors.map {|author| author.name }
+        end
+        
+        # you cal also dynamically set categories
+        category :content_length do
+          content.length 
         end
 
         # to pass in a list of variables with your document,

@@ -28,7 +28,7 @@ class Product < ActiveRecord::Base
 
   tankit 'tanker_integration_tests' do
     indexes :name
-    indexes :href
+    indexes :href, :category => true
     indexes :tags
     indexes :description
   end
@@ -241,5 +241,24 @@ describe 'An imaginary store' do
     end
   end
   
+  describe 'categories' do
+    it 'should find categories for query features' do
+      @results = Product.search_tank('features', :snippets => [:description], :fetch => [:name, :href])
+      @results.categories.should == {"href"=>{"amazon"=>1, "apple"=>1}}
+    end
+
+    it 'should find categories for query decent' do
+      @results = Product.search_tank('decent', :snippets => [:description], :fetch => [:name, :href])
+      @results.categories.should == {"href"=>{"amazon"=>2, "google"=>2, "yahoo"=>3, "ebay"=>1}}
+    end
+
+    it 'should apply actegory filters to search on products filtered by yahoo' do
+      category_filters = {
+        'href' => ['yahoo']
+      }
+      @results = Product.search_tank('decent', :snippets => [:description], :fetch => [:name, :href], :category_filters => category_filters )
+      @results.count.should == 3
+    end
+  end 
 end
 

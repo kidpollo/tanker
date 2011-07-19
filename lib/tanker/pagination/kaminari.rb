@@ -30,7 +30,8 @@ module Tanker
 
       class << self
         def create(results, total_hits, options = {})
-          new(results, options[:per_page], options[:page]-1, total_hits)
+          instance = new(results, options[:per_page], options[:page]-1, total_hits)
+          instance
         end
       end
     end

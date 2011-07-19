@@ -103,18 +103,22 @@ module Tanker
       options[:fetch]   += ",#{fetch.join(',')}" if fetch
       options[:snippet] = snippets.join(',') if snippets
 
+      # convert category_filters to a json string
+      options[:category_filters] = options[:category_filters].to_json if options[:category_filters]
+
       search_on_fields = models.map{|model| model.tanker_config.indexes.map{|arr| arr[0]}.uniq}.flatten.uniq.join(":(#{query.to_s}) OR ")
 
       query = "#{search_on_fields}:(#{query.to_s}) OR __any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
+      categories = results['facets'] if results.has_key?('facets')
 
       instantiated_results = if (fetch || snippets)
         instantiate_results_from_results(results, fetch, snippets)
       else
         instantiate_results_from_db(results)
       end
-      paginate === false ? instantiated_results : Pagination.create(instantiated_results, results['matches'], paginate)
+      paginate === false ? instantiated_results : Pagination.create(instantiated_results, results['matches'], paginate, categories)
     end
 
     protected
@@ -270,17 +274,32 @@ module Tanker
     attr_accessor :options
 
     def initialize(index_name, options, block)
-      @index_name = index_name
-      @options    = options
-      @indexes    = []
-      @variables  = []
-      @functions  = {}
+      @index_name         = index_name
+      @options            = options
+      @indexes            = []
+      @categories         = []
+      @variables          = []
+      @functions          = {}
       instance_exec &block
     end
 
-    def indexes(field = nil, &block)
-      @indexes << [field, block] if field
+    def indexes(field = nil, options = {}, &block)
+      if field
+        @indexes     << [field, block]
+        @categories  << [field, block] if options[:category]
+      end
       @indexes
+    end
+   
+    def category(field = nil, options = {}, &block)
+      categories field, options, &block
+    end
+
+    def categories(field = nil, options = {}, &block)
+      if field
+        @categories  << [field, block]
+      end
+      @categories
     end
 
     def variables(&block)
@@ -310,6 +329,10 @@ module Tanker
       tanker_config.indexes
     end
 
+    def tanker_categories
+      tanker_config.categories
+    end
+
     def tanker_variables
       tanker_config.variables
     end
@@ -333,7 +356,7 @@ module Tanker
       if respond_to?(:created_at)
         data[:timestamp] = created_at.to_i
       end
-
+      
       tanker_indexes.each do |field, block|
         val = block ? instance_exec(&block) : send(field)
         val = val.join(' ') if Array === val
@@ -363,6 +386,15 @@ module Tanker
         end
       end
 
+      unless tanker_categories.empty?
+        options[:categories] = {}
+        tanker_categories.each do |field, block|
+          val = block ? instance_exec(&block) : send(field)
+          val = val.join(' ') if Array === val
+          options[:categories][field] = val.to_s unless val.nil?
+        end
+      end 
+  
       options
     end
 
