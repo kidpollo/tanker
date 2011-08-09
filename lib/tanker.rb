@@ -141,10 +141,11 @@ module Tanker
           id_map[klass] = klass_const.where(klass_const.primary_key => ids)
         end
         # return them in order
-        results.map do |result|
+        results = results.map do |result|
           model, id = result["__type"], result["__id"]
           id_map[model].detect {|record| id == record.id.to_s }
         end
+        results.compact
       end
 
       def instantiate_results_from_results(index_result, fetch = false, snippets = false)
