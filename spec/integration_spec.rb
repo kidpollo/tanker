@@ -21,6 +21,9 @@ ActiveRecord::Schema.define do
     t.string :tags
     t.text :description
   end
+  create_table :companies do |t|
+    t.string :name
+  end
 end
 
 class Product < ActiveRecord::Base
@@ -33,6 +36,15 @@ class Product < ActiveRecord::Base
     indexes :description
   end
 end
+
+class Company < ActiveRecord::Base
+  include Tanker
+
+  tankit 'tanker_integration_tests' do
+    indexes :name
+  end
+end
+
 
 describe 'An imaginary store' do
 
@@ -67,6 +79,9 @@ describe 'An imaginary store' do
     @products_in_database = Product.all
 
     Product.tanker_reindex
+
+    @apple = Company.create(:name => 'apple')
+    Company.tanker_reindex
   end
 
   describe 'basic searching' do
@@ -105,6 +120,11 @@ describe 'An imaginary store' do
       results = Product.search_tank('IPHONE')
       results.should include(@iphone)
       results.should have(1).product
+    end
+
+    it "should not find a Company when searching Product" do
+      results = Product.search_tank("apple")
+      results.should_not include(@apple)
     end
   end
 
