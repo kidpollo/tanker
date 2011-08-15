@@ -271,7 +271,7 @@ describe Tanker do
 
     it 'should be able to use multi-value query phrases' do
       Person.tanker_index.should_receive(:search).with(
-        'name:(hey! location_id:(1) location_id:(2)) OR last_name:(hey! location_id:(1) location_id:(2)) OR __any:(hey! location_id:(1) location_id:(2)) __type:("Person")',
+        '(name:(hey! location_id:(1) location_id:(2)) OR last_name:(hey! location_id:(1) location_id:(2)) OR __any:(hey! location_id:(1) location_id:(2))) __type:("Person")',
         anything
       ).and_return({'results' => [], 'matches' => 0})
 
