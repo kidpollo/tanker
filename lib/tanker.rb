@@ -365,7 +365,7 @@ module Tanker
 
       data[:__any] = data.values.sort_by{|v| v.to_s}.join " . "
       data[:__type] = type_name
-      data[:__id] = self.id
+      data[:__id] = self.id.is_a?(Fixnum) ? self.id : self.id.to_s
 
       data
     end
