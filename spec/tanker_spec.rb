@@ -229,7 +229,7 @@ describe Tanker do
         }
       )
 
-      Person.should_receive(:find).and_return(
+      Person.should_receive(:find_all_by_id).and_return(
       [Person.new]
       )
 
@@ -260,7 +260,7 @@ describe Tanker do
         }
       )
 
-      Person.should_receive(:find).with(['mystring1d', '1']).and_return(
+      Person.should_receive(:find_all_by_id).with(['mystring1d', '1']).and_return(
         [Person.new, Person.new]
       )
 
@@ -323,10 +323,10 @@ describe Tanker do
         }
       )
 
-      Dog.should_receive(:find).and_return(
+      Dog.should_receive(:find_all_by_id).and_return(
         [Dog.new(:name => 'fido', :id => 7)]
       )
-      Cat.should_receive(:find).and_return(
+      Cat.should_receive(:find_all_by_id).and_return(
         [Cat.new(:name => 'fluffy', :id => 9)]
       )
 
@@ -350,7 +350,7 @@ describe Tanker do
           }]
         })
 
-      Foo::Bar.should_receive(:find).and_return([stub(:id => 42)])
+      Foo::Bar.should_receive(:find_all_by_id).and_return([stub(:id => 42)])
 
       Foo::Bar.search_tank('bar')
     end
@@ -374,7 +374,7 @@ describe Tanker do
         }
       )
 
-      Person.should_receive(:find).with(['1', '2']).and_return(
+      Person.should_receive(:find_all_by_id).with(['1', '2']).and_return(
         [Person.new, Person.new]
       )
 
@@ -402,7 +402,7 @@ describe Tanker do
         }
       )
 
-      Person.should_receive(:find).with(['1', '2']).and_return(
+      Person.should_receive(:find_all_by_id).with(['1', '2']).and_return(
         [Person.new, Person.new]
       )
 
@@ -540,7 +540,7 @@ describe Tanker do
           "search_time" => 1
         }
       )
-      Person.should_receive(:find).and_return([Person.new])
+      Person.should_receive(:find_all_by_id).and_return([Person.new])
 
       lambda { Person.search_tank('test') }.should raise_error(Tanker::BadConfiguration)
     end
@@ -560,7 +560,7 @@ describe Tanker do
         }
       )
 
-      Person.should_receive(:find).and_return([Person.new])
+      Person.should_receive(:find_all_by_id).and_return([Person.new])
 
       array = Person.search_tank('hey!')
       array.class.should == Tanker::Pagination::Kaminari
@@ -570,4 +570,5 @@ describe Tanker do
       array.current_page.should == 1
     end
   end
+
 end

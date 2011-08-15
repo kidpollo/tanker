@@ -26,6 +26,8 @@ end
 class Product < ActiveRecord::Base
   include Tanker
 
+  scope :amazon, :conditions => {:href => "amazon"}
+
   tankit 'tanker_integration_tests' do
     indexes :name
     indexes :href, :category => true
@@ -260,5 +262,13 @@ describe 'An imaginary store' do
       @results.count.should == 3
     end
   end 
+  
+  describe 'on scope' do
+    it 'should return amazon product only', :focus => true do
+      results = Product.amazon.search_tank('decent')
+      results.should include(@samsung, @motorola)
+      results.should have_exactly(2).products
+    end
+  end
 end
 
