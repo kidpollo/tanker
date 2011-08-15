@@ -108,7 +108,7 @@ module Tanker
 
       search_on_fields = models.map{|model| model.tanker_config.indexes.map{|arr| arr[0]}.uniq}.flatten.uniq.join(":(#{query.to_s}) OR ")
 
-      query = "#{search_on_fields}:(#{query.to_s}) OR __any:(#{query.to_s}) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
+      query = "(#{search_on_fields}:(#{query.to_s}) OR __any:(#{query.to_s})) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
       categories = results['facets'] if results.has_key?('facets')
