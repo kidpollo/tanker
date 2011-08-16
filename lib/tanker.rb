@@ -138,7 +138,11 @@ module Tanker
         id_map.each do |klass, ids|
           # replace the id list with an eager-loaded list of records for this model
           klass_const = constantize(klass)
-          id_map[klass] = klass_const.find_all_by_id(ids)
+          if klass_const.respond_to?('find_all_by_id') 
+            id_map[klass] = klass_const.find_all_by_id(ids)
+          else
+            id_map[klass] = klass_const.find(ids)
+          end  
         end
         # return them in order
         results = results.map do |result|

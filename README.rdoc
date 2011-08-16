@@ -124,7 +124,7 @@ Search Topics
     @topics = Topic.search_tank('blah',  :conditions => {:tag_list => 'tag1'}) # Gets 2 results!
     @topics = Topic.search_tank('blah',  :conditions => {:title => 'Awesome', :tag_list => 'tag1'}) # Gets 1 result!
 
-Search with scope
+Search with scope (Only tested on ActiveRecord)
 
     @topics = Topic.awesome.search_tank('blah') # Gets 1 result!
     
