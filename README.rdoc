@@ -54,6 +54,9 @@ or
       
       # just include the Tanker module
       include Tanker
+      
+      # define a scope
+      scope :awesome, :conditions => {:title => 'Awesome'}
 
       # define the index by supplying the index name and the fields to index
       # this is the index name you create in the Index Tank dashboard
@@ -121,6 +124,10 @@ Search Topics
     @topics = Topic.search_tank('blah',  :conditions => {:tag_list => 'tag1'}) # Gets 2 results!
     @topics = Topic.search_tank('blah',  :conditions => {:title => 'Awesome', :tag_list => 'tag1'}) # Gets 1 result!
 
+Search with scope (Only tested on ActiveRecord)
+
+    @topics = Topic.awesome.search_tank('blah') # Gets 1 result!
+    
 Search with wildcards!
 
     @topics = Topic.search_tank('Awe*', :page => 1, :per_page => 10) # Gets 1 result!

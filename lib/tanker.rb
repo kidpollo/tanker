@@ -137,13 +137,19 @@ module Tanker
 
         id_map.each do |klass, ids|
           # replace the id list with an eager-loaded list of records for this model
-          id_map[klass] = constantize(klass).find(ids)
+          klass_const = constantize(klass)
+          if klass_const.respond_to?('find_all_by_id') 
+            id_map[klass] = klass_const.find_all_by_id(ids)
+          else
+            id_map[klass] = klass_const.find(ids)
+          end  
         end
         # return them in order
-        results.map do |result|
+        results = results.map do |result|
           model, id = result["__type"], result["__id"]
           id_map[model].detect {|record| id == record.id.to_s }
         end
+        results.compact
       end
 
       def instantiate_results_from_results(index_result, fetch = false, snippets = false)
