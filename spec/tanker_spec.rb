@@ -375,9 +375,9 @@ describe Tanker do
       )
 
       Person.should_receive(:find_all_by_id).with(['1', '2']).and_return(
-        [Person.new, Person.new]
+        [Person.new(:id => 1), Person.new(:id => 2)]
       )
-
+      
       collection = Person.search_tank('hey!', :paginate => false)
       collection.class.should == Array
       collection.size.should == 2
@@ -418,7 +418,7 @@ describe Tanker do
       person = Person.new(:name => 'Name', :last_name => 'Last Name')
 
       Person.tanker_index.should_receive(:add_document).with(
-        Person.new.it_doc_id,
+        Person.new(:id => 1).it_doc_id,
         {
           :__any     => "#{$frozen_moment.to_i} . Last Name . Name",
           :__type    => 'Person',
