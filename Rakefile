@@ -21,10 +21,24 @@ end
 require "rspec/core/rake_task"
 # RSpec 2.0
 RSpec::Core::RakeTask.new(:spec) do |spec|
-  spec.pattern = 'spec/*_spec.rb'
+  spec.pattern = 'spec/{tanker,utilities}_spec.rb'
   spec.rspec_opts = ['--backtrace']
 end
 task :default => :spec
+
+desc "Generate code coverage"
+RSpec::Core::RakeTask.new(:coverage) do |t|
+  t.pattern = "./spec/**/*_spec.rb" # don't need this, it's default.
+  t.rcov = true
+  t.rcov_opts = ['--exclude', 'spec']
+end
+
+desc "Run Integration Specs"
+RSpec::Core::RakeTask.new(:integration) do |t|
+  t.pattern = "spec/integration_spec.rb" # don't need this, it's default.
+  t.rcov = true
+  t.rcov_opts = ['--exclude', 'spec']
+end
 
 require 'rake/rdoctask'
 Rake::RDocTask.new do |rdoc|
