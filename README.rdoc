@@ -1,4 +1,4 @@
-link:https://secure.travis-ci.org/kidpollo/tanker.png
+http://secure.travis-ci.org/kidpollo/tanker.png
 
 = Tanker - IndexTank integration to your favorite orm
 
