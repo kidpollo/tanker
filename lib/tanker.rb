@@ -61,7 +61,7 @@ module Tanker
       records.first.class.tanker_index.add_documents(data)
     end
 
-    def search(models, query, options = {})
+    def search_results(models, query, options = {})
       ids      = []
       models   = [models].flatten.uniq
       index    = models.first.tanker_index
@@ -111,6 +111,41 @@ module Tanker
       query = "(#{search_on_fields}:(#{query.to_s}) OR __any:(#{query.to_s})) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
+      SearchState.new(results, fetch, snippets, paginate) 
+    end
+
+    class SearchState
+      def initialize(results, fetch, snippets, paginate)
+        @results = results
+        @fetch = fetch
+        @snippets = snippets
+        @paginate = paginate
+      end
+      def results
+        @results
+      end
+      def fetch
+        @fetch
+      end 
+      def snippets
+        @snippets
+      end
+      def paginate
+        @paginate
+      end
+    end
+
+    def search(models, query, options = {})
+      search_state = search_results(models, query, options)
+      instantiate(search_results)
+    end 
+
+    def instantiate(search_state)
+      results = search_state.results
+      fetch = search_state.fetch
+      snippets = search_state.snippets
+      paginate = search_state.paginate
+
       categories = results['facets'] if results.has_key?('facets')
 
       instantiated_results = if (fetch || snippets)
