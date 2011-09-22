@@ -137,7 +137,7 @@ module Tanker
 
     def search(models, query, options = {})
       search_state = search_results(models, query, options)
-      instantiate(search_results)
+      instantiate(search_state)
     end 
 
     def instantiate(search_state)
