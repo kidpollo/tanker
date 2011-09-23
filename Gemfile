@@ -6,8 +6,8 @@ group :test do
   gem 'rspec', '>= 2.5.0'
   gem 'activerecord', '>= 3.0.7'
   gem 'sqlite3'
-  gem 'rcov'
-  gem 'ruby-debug19'
+  #gem 'rcov'
+  #gem 'ruby-debug19'
 end
 
 group :development do
