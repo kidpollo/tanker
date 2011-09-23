@@ -150,9 +150,6 @@ Paginate Results
     <%= will_paginate @topics %> for WillPaginate 
     <%= paginate @topics %> for Kaminari
 
-Disable pagination of search results
-
-    @topics = Topic.search_tank('keyword', :paginate => false)
 
 == Fetching attributes and snippets
 

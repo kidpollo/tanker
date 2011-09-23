@@ -78,12 +78,21 @@ describe 'An imaginary store' do
     @iphone = Product.create(:name => 'iphone', :href => "apple", :tags => ['awesome', 'poor reception'], 
       :description => 'Puts even more features at your fingertips')
 
+    100.times do ; Product.create(:name => 'crapoola', :href => "crappy", :tags => ['crappy']) ; end
+
     @products_in_database = Product.all
 
     Product.tanker_reindex
 
     @apple = Company.create(:name => 'apple')
     Company.tanker_reindex
+  end
+
+  describe 'pagination' do
+    it 'should dilplay total results correctly' do
+      results = Product.search_tank('crapoola')
+      results.total_entries.should == 100
+    end
   end
 
   describe 'basic searching' do

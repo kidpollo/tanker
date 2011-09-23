@@ -230,7 +230,7 @@ module Tanker
 
       def extract_setup_paginate_options(options, defaults)
         # extract
-        paginate_options = if options[:paginate] or options[:paginate] === false
+        paginate_options = if options[:paginate]
           options.delete(:paginate)
         else
           { :page => options.delete(:page), :per_page => options.delete(:per_page) }

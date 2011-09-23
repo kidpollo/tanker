@@ -355,34 +355,6 @@ describe Tanker do
       Foo::Bar.search_tank('bar')
     end
 
-    it 'should be able to perform a search without pagination' do
-      Person.tanker_index.should_receive(:search).and_return(
-        {
-          "matches" => 2,
-          "results" => [{
-            "docid"  => 'Person 1',
-            "name"   => 'pedro',
-            "__type" => 'Person',
-            "__id"   => '1'
-          },{
-            "docid"  => 'Person 2',
-            "name"   => 'jaun',
-            "__type" => 'Person',
-            "__id"   => '2'
-          }],
-          "search_time" => 1
-        }
-      )
-
-      Person.should_receive(:find_all_by_id).with(['1', '2']).and_return(
-        [Person.new(:id => 1), Person.new(:id => 2)]
-      )
-      
-      collection = Person.search_tank('hey!', :paginate => false)
-      collection.class.should == Array
-      collection.size.should == 2
-    end
-
     it 'should be able to perform a search with pagination settings in :paginate option' do
       Person.tanker_index.should_receive(:search).and_return(
         {

@@ -7,7 +7,7 @@ group :test do
   gem 'activerecord', '>= 3.0.7'
   gem 'sqlite3'
   gem 'rcov'
-  #gem 'ruby-debug19'
+  gem 'ruby-debug19'
 end
 
 group :development do
