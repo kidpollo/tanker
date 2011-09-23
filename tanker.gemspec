@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{tanker}
-  s.version = "1.1.4"
+  s.version = "1.1.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = [%q{Francisco Viramontes}, %q{Jack Danger Canty}]
-  s.date = %q{2011-08-31}
+  s.date = %q{2011-09-23}
   s.description = %q{IndexTank is a great search indexing service, this gem tries to make any orm keep in sync with indextank with ease}
   s.email = %q{kidpollo@gmail.com}
   s.extra_rdoc_files = [
@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     ".document",
+    ".travis.yml",
     "Gemfile",
     "LICENSE",
     "README.rdoc",
