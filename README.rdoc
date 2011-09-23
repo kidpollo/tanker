@@ -1,3 +1,5 @@
+{<img src="https://secure.travis-ci.org/kidpollo/tanker.png" />}[https://secure.travis-ci.org/kidpollo/tanker.png]
+
 = Tanker - IndexTank integration to your favorite orm
 
 IndexTank is a great search indexing service, this gem tries to make
