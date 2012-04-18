@@ -204,6 +204,50 @@ describe Tanker do
 
       Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
     end
+
+    describe 'evaluating indexing conditions' do
+
+      it 'should be indexable when no conditions are given' do
+        @dummy_class.send(:tankit, 'dummy index') do
+          indexes :something
+        end
+        dummy_instance = @dummy_class.new
+        dummy_instance.should be_tanker_indexable
+      end
+
+      it 'should be indexable when no conditions are given' do
+        @dummy_class.send(:tankit, 'dummy index') do
+          indexes :something
+          conditions
+        end
+        dummy_instance = @dummy_class.new
+        dummy_instance.should be_tanker_indexable
+      end
+
+      it 'should be indexable when conditions are satisfied' do
+        @dummy_class.send(:tankit, 'dummy index') do
+          indexes :something
+          conditions do
+            true
+          end
+        end
+        dummy_instance = @dummy_class.new
+        dummy_instance.should be_tanker_indexable
+      end
+
+      it 'should not be indexable when conditions are not satisfied' do
+        @dummy_class.send(:tankit, 'dummy index') do
+          indexes :something
+          conditions do
+            false
+          end
+        end
+        dummy_instance = @dummy_class.new
+        dummy_instance.should_not be_tanker_indexable
+      end
+
+    end
+
   end
 
   describe 'tanker instance' do

@@ -58,7 +58,9 @@ module Tanker
         if record.tanker_indexable?
           options.merge!( :docid => record.it_doc_id, :fields => record.tanker_index_data )
           options
-        else nil
+        else 
+          nil
+        end  
       end.compact
       records.first.class.tanker_index.add_documents(data)
     end
@@ -402,8 +404,9 @@ module Tanker
     end
 
     def tanker_indexable?
-      return instance_exec(&tanker_conditions.first) if !tanker_conditions.empty?
-      return true
+      no_conditions = tanker_conditions.nil? || tanker_conditions.empty? || tanker_conditions.first.nil?
+      return true if no_conditions
+      instance_exec(&tanker_conditions.first)
     end
 
     def tanker_index_data
