@@ -205,7 +205,7 @@ describe Tanker do
       Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
     end
 
-    describe 'evaluating indexing conditions' do
+    context 'evaluating indexing conditions' do
 
       it 'should be indexable when no conditions are given' do
         @dummy_class.send(:tankit, 'dummy index') do
