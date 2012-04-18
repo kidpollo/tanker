@@ -42,21 +42,21 @@ WillPaginate is used by default and you don't have to add any extra settings to 
 want to use Kaminari you have to add the following:
 
     YourAppName::Application.config.index_tank_url = 'http://...'
-    YourAppName::Application.config.tanker_pagination_backend = :kaminari  
+    YourAppName::Application.config.tanker_pagination_backend = :kaminari
 
 or
 
     Tanker.configuration = {:url => 'http://...', :pagination_backend => :kaminari }
 
 == Example
-    
+
     class Topic < ActiveRecord::Base
       acts_as_taggable
       has_many :authors
-      
+
       # just include the Tanker module
       include Tanker
-      
+
       # define a scope
       scope :awesome, :conditions => {:title => 'Awesome'}
 
@@ -65,6 +65,11 @@ or
       # you can use the same index for various models Tanker can handle
       # indexing searching on different models with a single Index Tank index
       tankit 'my_index' do
+
+        conditions do
+          any_instance_methods
+        end
+
         indexes :title
         indexes :content
         indexes :id
@@ -75,10 +80,10 @@ or
         indexes :author_names do
           authors.map {|author| author.name }
         end
-        
+
         # you cal also dynamically set categories
         category :content_length do
-          content.length 
+          content.length
         end
 
         # to pass in a list of variables with your document,
@@ -100,7 +105,7 @@ or
           }
         end
       end
-      
+
       # define the callbacks to update or delete the index
       # these methods can be called whenever or wherever
       # this varies between ORMs
@@ -129,7 +134,7 @@ Search Topics
 Search with scope (Only tested on ActiveRecord)
 
     @topics = Topic.awesome.search_tank('blah') # Gets 1 result!
-    
+
 Search with wildcards!
 
     @topics = Topic.search_tank('Awe*', :page => 1, :per_page => 10) # Gets 1 result!
@@ -149,7 +154,7 @@ Search with query variables
 
 Paginate Results
 
-    <%= will_paginate @topics %> for WillPaginate 
+    <%= will_paginate @topics %> for WillPaginate
     <%= paginate @topics %> for Kaminari
 
 
@@ -163,13 +168,13 @@ you indexed in your model. There are edge cases that are not tested so please he
 have everyone benefit from the speed this entails.
 
 Example:
-  
+
     @very_long_sting = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
     Product.create(:name => @very_long_sting, :href => 'http://google.com' )
-    
+
     @products = Product.search_tank('quis exercitation', :snippets => [:name], :fetch => [:href])
-    @products[0].name_snippet 
-    # => 'Ut enim ad minim veniam, <b>quis</b> nostrud <b>exercitation</b> ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla' 
+    @products[0].name_snippet
+    # => 'Ut enim ad minim veniam, <b>quis</b> nostrud <b>exercitation</b> ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla'
     @products[0].href
     # => 'http://google.com'
     @products[0].any_other_attribute
@@ -178,11 +183,11 @@ Example:
 Notice that to get the snippeted value that Index Tank sends you get it via the '_snippet' method generated on the fly.
 
 The attributes that are requested to be fetched are set as attributes as new instances of your model objects and no Database Query is executed. NEAT!
-    
+
 == Geospatial Search Example
 
 IndexTank and the Tanker gem support native geographic calculations. All you need is to define two document variables with your latitude and your longitude
- 
+
     class Restaurant < ActiveRecord::Base
       include Tanker
 
@@ -212,7 +217,7 @@ IndexTank and the Tanker gem support native geographic calculations. All you nee
         end
       end
     end
-    
+
     # When searching, you need to provide a latitude and longitude in the query so that
     # these variables are accessible on the server.
     Restaurant.search("tasty",
@@ -306,11 +311,11 @@ as the same type, you can provide the base model name with an +:as+ option to +t
     class Pet < ActiveRecord::Base
     end
 
-    class Cat < Pet 
+    class Cat < Pet
       include TankerPetDefaults
     end
 
-    class Monkey < Pet 
+    class Monkey < Pet
       include TankerPetDefaults
     end
 
@@ -332,7 +337,7 @@ you have enough available indexes in your account.
 This task pushes any functions you've defined in your tankit() blocks to indextank.com
 
     rake tanker:functions
-    
+
 This task re-indexes all the your models that have the Tanker module included.
 Usually you will only need a single Index Tank index but if you want to separate
 your indexes please use different index names in the tankit method call in your models
@@ -350,7 +355,7 @@ Or you can restrict indexing to a subset of records. This is particularly helpfu
     Model.tanker_reindex(:batch_size => 1000, :scope => :not_deleted) # will call Model.not_deleted.all internally
 
 == Note on Patches/Pull Requests
- 
+
 * Fork the project.
 * Make your feature addition or bug fix.
 * Add tests for it. This is important so I don't break it in a
@@ -361,10 +366,10 @@ Or you can restrict indexing to a subset of records. This is particularly helpfu
 
 == Note on testing
 
-Tanker is has a full suite of unit tests that cover configuration and the api of the library but it also inludes a battery of Integration tests! 
+Tanker is has a full suite of unit tests that cover configuration and the api of the library but it also inludes a battery of Integration tests!
 These tests spec the behabiero between  Index Tank and an ActiveRecord model with a Sqlite3 Backend.
 
-If you want to run the specs you will need to provide an Index Tank Api key and user in the +spec/integration_spec_conf.rb+ file. 
+If you want to run the specs you will need to provide an Index Tank Api key and user in the +spec/integration_spec_conf.rb+ file.
 This file is ignored from the repo but you'll find an example file in the same path.
 
 == Acknowledgements
