@@ -60,7 +60,7 @@ describe Tanker do
       @dummy_class.send(:tankit, 'dummy index') do
         indexes :field
       end
-       
+
       dummy_instance = @dummy_class.new
       dummy_instance.tanker_config.indexes.any? {|field, block| field == :field }.should == true
     end
@@ -69,7 +69,7 @@ describe Tanker do
       @dummy_class.send(:tankit, 'dummy index') do
         indexes :category, :category => true
       end
-      
+
       dummy_instance = @dummy_class.new
       dummy_instance.tanker_config.categories.any? {|field, block| field == :category }.should == true
     end
@@ -79,9 +79,9 @@ describe Tanker do
         indexes :category, :category => true
         category :category_2 do
           'blah'
-        end 
+        end
       end
-      
+
       dummy_instance = @dummy_class.new
       dummy_instance.tanker_config.categories.any? {|field, block| field == :category }.should == true
       dummy_instance.tanker_config.categories.any? {|field, block| field == :category_2 }.should == true
@@ -127,7 +127,7 @@ describe Tanker do
       end
 
       dummy_instance = @dummy_class.new
-      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:something).should == true       
+      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:something).should == true
       Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:something_else).should == true
     end
 
@@ -205,7 +205,16 @@ describe Tanker do
       Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
     end
 
-    context 'evaluating indexing conditions' do
+    describe 'evaluating indexing conditions' do
+      before do
+        @dummy_class = Class.new do
+          include Tanker
+
+          def index_or_not?
+            true
+          end
+        end
+      end
 
       it 'should be indexable when no conditions are given' do
         @dummy_class.send(:tankit, 'dummy index') do
@@ -244,6 +253,17 @@ describe Tanker do
         end
         dummy_instance = @dummy_class.new
         dummy_instance.should_not be_tanker_indexable
+      end
+
+      it "should work with an arbitrary instance method" do
+        @dummy_class.send(:tankit, 'dummy index') do
+          indexes :something
+          conditions do
+            index_or_not?
+          end
+        end
+        dummy_instance = @dummy_class.new
+        dummy_instance.should be_tanker_indexable
       end
 
     end
