@@ -404,8 +404,7 @@ module Tanker
     end
 
     def tanker_indexable?
-      no_conditions = tanker_conditions.nil? || tanker_conditions.empty? || tanker_conditions.first.nil?
-      return true if no_conditions
+      return true if tanker_conditions.empty? || tanker_conditions.first.nil?
       instance_exec(&tanker_conditions.first)
     end
 
