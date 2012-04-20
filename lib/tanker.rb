@@ -55,10 +55,14 @@ module Tanker
       return false if records.empty?
       data = records.map do |record|
         options = record.tanker_index_options
-        options.merge!( :docid => record.it_doc_id, :fields => record.tanker_index_data )
-        options
-      end
-      records.first.class.tanker_index.add_documents(data)
+        if record.tanker_indexable?
+          options.merge!( :docid => record.it_doc_id, :fields => record.tanker_index_data )
+          options
+        else
+          nil
+        end
+      end.compact
+      records.first.class.tanker_index.add_documents(data) unless data.empty?
     end
 
     def search_results(models, query, options = {})
@@ -111,7 +115,7 @@ module Tanker
       query = "(#{search_on_fields}:(#{query.to_s}) OR __any:(#{query.to_s})) __type:(#{models.map(&:name).map {|name| "\"#{name.split('::').join(' ')}\"" }.join(' OR ')})"
       options = { :start => paginate[:per_page] * (paginate[:page] - 1), :len => paginate[:per_page] }.merge(options) if paginate
       results = index.search(query, options)
-      SearchState.new(results, fetch, snippets, paginate) 
+      SearchState.new(results, fetch, snippets, paginate)
     end
 
     class SearchState
@@ -126,7 +130,7 @@ module Tanker
       end
       def fetch
         @fetch
-      end 
+      end
       def snippets
         @snippets
       end
@@ -138,7 +142,7 @@ module Tanker
     def search(models, query, options = {})
       search_state = search_results(models, query, options)
       instantiate(search_state)
-    end 
+    end
 
     def instantiate(search_state)
       results = search_state.results
@@ -173,11 +177,11 @@ module Tanker
         id_map.each do |klass, ids|
           # replace the id list with an eager-loaded list of records for this model
           klass_const = constantize(klass)
-          if klass_const.respond_to?('find_all_by_id') 
+          if klass_const.respond_to?('find_all_by_id')
             id_map[klass] = klass_const.find_all_by_id(ids)
           else
             id_map[klass] = klass_const.find(ids)
-          end  
+          end
         end
         # return them in order
         results = results.map do |result|
@@ -320,6 +324,7 @@ module Tanker
       @indexes            = []
       @categories         = []
       @variables          = []
+      @conditions         = []
       @functions          = {}
       instance_exec &block
     end
@@ -331,7 +336,11 @@ module Tanker
       end
       @indexes
     end
-   
+
+    def conditions(&block)
+      @conditions << block
+    end
+
     def category(field = nil, options = {}, &block)
       categories field, options, &block
     end
@@ -378,16 +387,25 @@ module Tanker
       tanker_config.variables
     end
 
+    def tanker_conditions
+      tanker_config.conditions
+    end
+
     # update a create instance from index tank
     def update_tank_indexes
       tanker_config.index.add_document(
         it_doc_id, tanker_index_data, tanker_index_options
-      )
+      ) if tanker_indexable?
     end
 
     # delete instance from index tank
     def delete_tank_indexes
       tanker_config.index.delete_document(it_doc_id)
+    end
+
+    def tanker_indexable?
+      return true if tanker_conditions.empty? || tanker_conditions.first.nil?
+      instance_exec(&tanker_conditions.first)
     end
 
     def tanker_index_data
@@ -397,7 +415,7 @@ module Tanker
       if respond_to?(:created_at)
         data[:timestamp] = created_at.to_i
       end
-      
+
       tanker_indexes.each do |field, block|
         val = block ? instance_exec(&block) : send(field)
         val = val.join(' ') if Array === val
@@ -434,8 +452,8 @@ module Tanker
           val = val.join(' ') if Array === val
           options[:categories][field] = val.to_s unless val.nil?
         end
-      end 
-  
+      end
+
       options
     end
 
