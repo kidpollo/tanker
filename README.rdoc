@@ -119,7 +119,7 @@ or
 
       # will only index entries whose title is present
       def indexable?
-        if self.title.present?
+        self.title.present?
       end
 
     end
