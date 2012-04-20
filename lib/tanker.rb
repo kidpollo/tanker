@@ -392,10 +392,15 @@ module Tanker
     end
 
     # update a create instance from index tank
+    # or remove it if not indexable anymore
     def update_tank_indexes
-      tanker_config.index.add_document(
-        it_doc_id, tanker_index_data, tanker_index_options
-      ) if tanker_indexable?
+      if tanker_indexable?
+        tanker_config.index.add_document(
+          it_doc_id, tanker_index_data, tanker_index_options
+        )
+      else
+        delete_tank_indexes
+      end
     end
 
     # delete instance from index tank
