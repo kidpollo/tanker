@@ -45,7 +45,7 @@ module IndexTank
         end
 
         def execute(req)
-            res = Net::HTTP.new(@uri.host).start { |http| http.request(req) }
+            res = Net::HTTP.new(@uri.host, @uri.port).start { |http| http.request(req) }
             if res.is_a? Net::HTTPSuccess
                 if res.body.nil? or res.body.empty?
                     return res.code, nil
