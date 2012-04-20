@@ -67,7 +67,7 @@ or
       tankit 'my_index' do
 
         conditions do
-          any_instance_methods
+          indexable?
         end
 
         indexes :title
@@ -115,6 +115,11 @@ or
       # Note! Will Paginate pagination, thanks mislav!
       def self.per_page
         5
+      end
+
+      # will only index entries whose title is present
+      def indexable?
+        if self.title.present?
       end
 
     end

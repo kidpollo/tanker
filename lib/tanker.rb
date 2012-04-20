@@ -58,11 +58,11 @@ module Tanker
         if record.tanker_indexable?
           options.merge!( :docid => record.it_doc_id, :fields => record.tanker_index_data )
           options
-        else 
+        else
           nil
-        end  
+        end
       end.compact
-      records.first.class.tanker_index.add_documents(data)
+      records.first.class.tanker_index.add_documents(data) unless data.empty?
     end
 
     def search_results(models, query, options = {})
