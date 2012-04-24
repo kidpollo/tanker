@@ -216,6 +216,17 @@ describe Tanker do
         end
       end
 
+      it "should remove object from index if conditions are not met" do
+        @dummy_class.send(:tankit, 'dummy index') do
+          indexes :something
+          conditions { false }
+        end
+        dummy_instance = @dummy_class.new
+        dummy_instance.should_receive(:delete_tank_indexes).once
+
+        dummy_instance.update_tank_indexes
+      end
+
       it 'should be indexable when no conditions are given' do
         @dummy_class.send(:tankit, 'dummy index') do
           indexes :something
