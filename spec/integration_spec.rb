@@ -26,13 +26,22 @@ ActiveRecord::Schema.define do
   end
 end
 
+module TankerDefaults
+  def self.included(base)
+    base.send :include, Tanker
+
+    base.tankit 'tanker_integration_tests' do
+      indexes :name
+    end
+  end
+end
+
 class Product < ActiveRecord::Base
-  include Tanker
+  include TankerDefaults
 
   scope :amazon, :conditions => {:href => "amazon"}
 
-  tankit 'tanker_integration_tests' do
-    indexes :name
+  tankit do
     indexes :href, :category => true
     indexes :tags
     indexes :description
@@ -40,11 +49,7 @@ class Product < ActiveRecord::Base
 end
 
 class Company < ActiveRecord::Base
-  include Tanker
-
-  tankit 'tanker_integration_tests' do
-    indexes :name
-  end
+  include TankerDefaults
 end
 
 
@@ -179,12 +184,6 @@ describe 'An imaginary store' do
       results.should have_exactly(1).product
     end
 
-    it 'should find all "decent" products excluding those sold by apple (using alternate syntax)' do
-      results = Product.search_tank('awesome', :conditions => {'NOT href' => 'apple'})
-      results.should include(@android)
-      results.should have_exactly(1).product
-    end
-
     it 'should find the "htc" but not the "htc evo"' do
       results = Product.search_tank('htc NOT evo')
       results.should include(@htc)
@@ -236,7 +235,7 @@ describe 'An imaginary store' do
 
     it 'should return a snippet for motorola' do
       snippets = @results.map(&:description_snippet)
-      snippets.should include("Not sure about <b>features</b> since I've never owned one")
+      snippets.should include("Not sure about <b>features</b> since I've never owned one.")
     end
   end
 
@@ -267,7 +266,7 @@ describe 'An imaginary store' do
     end
 
     it 'should set the "description_snippet" attribute for all results' do
-      @indexed_motorola.description_snippet.should == "Not sure about <b>features</b> since I've never owned one"
+      @indexed_motorola.description_snippet.should == "Not sure about <b>features</b> since I've never owned one."
       @indexed_iphone.description_snippet.should == "Puts even more <b>features</b> at your fingertips"
     end
   end
@@ -275,12 +274,12 @@ describe 'An imaginary store' do
   describe 'categories' do
     it 'should find categories for query features' do
       @results = Product.search_tank('features', :snippets => [:description], :fetch => [:name, :href])
-      @results.categories.should == {"href"=>{"amazon"=>1, "apple"=>1}}
+      @results.categories.should == {"href"=>{"amazon"=>"1", "apple"=>"1"}}
     end
 
     it 'should find categories for query decent' do
       @results = Product.search_tank('decent', :snippets => [:description], :fetch => [:name, :href])
-      @results.categories.should == {"href"=>{"amazon"=>2, "google"=>2, "yahoo"=>3, "ebay"=>1}}
+      @results.categories.should == {"href"=>{"google"=>"2", "amazon"=>"2", "ebay"=>"1", "yahoo"=>"3"}}
     end
 
     it 'should apply actegory filters to search on products filtered by yahoo' do

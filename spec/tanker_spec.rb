@@ -193,7 +193,13 @@ describe Tanker do
         include dummy_module
 
         tankit 'another index' do
-          indexes :email
+          indexes :email, :category => true
+
+          functions do
+            {
+                0 => '-age'
+            }
+          end
         end
       end
 
@@ -201,6 +207,8 @@ describe Tanker do
       dummy_instance.tanker_config.index_name.should == 'another index'
       Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:name).should == true
       Hash[*dummy_instance.tanker_config.indexes.flatten].keys.include?(:email).should == true
+      Hash[*dummy_instance.tanker_config.categories.flatten].keys.include?(:email).should == true
+      Hash[*dummy_instance.tanker_config.functions.flatten].keys.include?(0).should == true
 
       Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
     end

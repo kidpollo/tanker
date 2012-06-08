@@ -269,6 +269,12 @@ module Tanker
           self.tanker_config.indexes << [key, value]
         end
 
+        config.categories.each do |key, value|
+          self.tanker_config.categories << [key, value]
+        end
+
+        self.tanker_config.functions.merge!(config.functions)
+
         unless config.variables.empty?
           self.tanker_config.variables do
             instance_exec &config.variables.first
