@@ -1,9 +1,9 @@
-require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
+require 'spec_helper'
 
 describe Tanker::Utilities do
 
-  before(:each) do 
-    
+  before(:each) do
+
     @included_in = Tanker.instance_variable_get :@included_in
     Tanker.instance_variable_set :@included_in, []
 

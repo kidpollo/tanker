@@ -1,10 +1,7 @@
-require 'rubygems'
-Bundler.setup :test
+require 'simplecov'
+SimpleCov.start
 
-$LOAD_PATH.unshift(File.dirname(__FILE__))
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'tanker'
-require 'rspec'
 
 RSpec.configure do |c|
   c.mock_with :rspec
@@ -15,7 +12,6 @@ Tanker.configuration = {:url => 'http://api.indextank.com'}
 $frozen_moment = Time.now
 
 class Person
-
   attr_accessor :name, :last_name
 
   def initialize(attrs = {})
@@ -51,6 +47,7 @@ end
 
 class Dog
   attr_accessor :name, :id
+
   def initialize(attrs = {})
     attrs.each {|k,v| self.send "#{k}=", v }
   end
@@ -65,6 +62,7 @@ end
 
 class Cat
   attr_accessor :name, :id
+
   def initialize(attrs = {})
     attrs.each {|k,v| self.send "#{k}=", v }
   end
@@ -74,7 +72,6 @@ class Cat
   tankit 'animals' do
     indexes :name
   end
-
 end
 
 module Foo

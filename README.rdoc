@@ -377,6 +377,8 @@ These tests spec the behabiero between  Index Tank and an ActiveRecord model wit
 If you want to run the specs you will need to provide an Index Tank Api key and user in the +spec/integration_spec_conf.rb+ file.
 This file is ignored from the repo but you'll find an example file in the same path.
 
+To run specs `bundle exec rake spec` and `bundle exec rake spec integration`
+
 == Acknowledgements
 The gem is based on a couple of projects:
 

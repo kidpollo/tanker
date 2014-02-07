@@ -1,17 +1,12 @@
-require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'integration_spec_conf'))
-
+require 'spec_helper'
+require 'integration_spec_conf'
 require 'active_record'
-require 'sqlite3'
 require 'logger'
 
-FileUtils.rm( 'data.sqlite3' ) rescue nil
 ActiveRecord::Base.logger = Logger.new(STDOUT)
 ActiveRecord::Base.establish_connection(
-    'adapter' => 'sqlite3',
-    'database' => 'data.sqlite3',
-    'pool' => 5,
-    'timeout' => 5000
+  'adapter' => 'sqlite3',
+  'database' => ':memory:'
 )
 
 ActiveRecord::Schema.define do
@@ -39,7 +34,9 @@ end
 class Product < ActiveRecord::Base
   include TankerDefaults
 
-  scope :amazon, :conditions => {:href => "amazon"}
+  serialize :tags, Array
+
+  scope :amazon, -> { where(:href => 'amazon') }
 
   tankit do
     indexes :href, :category => true
@@ -80,7 +77,7 @@ describe 'An imaginary store' do
     @ericson = Product.create(:name => 'ericson', :href => "yahoo", :tags => ['decent'])
 
     # Apple products
-    @iphone = Product.create(:name => 'iphone', :href => "apple", :tags => ['awesome', 'poor reception'], 
+    @iphone = Product.create(:name => 'iphone', :href => "apple", :tags => ['awesome', 'poor reception'],
       :description => 'Puts even more features at your fingertips')
 
     100.times do ; Product.create(:name => 'crapoola', :href => "crappy", :tags => ['crappy']) ; end
@@ -205,7 +202,10 @@ describe 'An imaginary store' do
 
     it "should set any non-fetched attributes to nil" do
       @results.first.href.should be_nil
-      @results.first.tags.should be_nil
+    end
+
+    it "should set any non-fetched array attributes to empty array" do
+      @results.first.tags.should be_empty
     end
 
     it "should build results from the index without touching the database" do
@@ -235,12 +235,12 @@ describe 'An imaginary store' do
 
     it 'should return a snippet for motorola' do
       snippets = @results.map(&:description_snippet)
-      snippets.should include("Not sure about <b>features</b> since I've never owned one.")
+      snippets.should include("Not sure about <b>features</b> since I've never owned one")
     end
   end
 
   describe "searching snippets while also fetching specific attributes" do
-    before :all do 
+    before :all do
       @results = Product.search_tank('features', :snippets => [:description], :fetch => [:name, :href])
       @indexed_iphone = @results.detect { |r| r.name == 'iphone' }
       @indexed_motorola = @results.detect { |r| r.name == 'motorola' }
@@ -266,20 +266,20 @@ describe 'An imaginary store' do
     end
 
     it 'should set the "description_snippet" attribute for all results' do
-      @indexed_motorola.description_snippet.should == "Not sure about <b>features</b> since I've never owned one."
+      @indexed_motorola.description_snippet.should == "Not sure about <b>features</b> since I've never owned one"
       @indexed_iphone.description_snippet.should == "Puts even more <b>features</b> at your fingertips"
     end
   end
-  
+
   describe 'categories' do
     it 'should find categories for query features' do
       @results = Product.search_tank('features', :snippets => [:description], :fetch => [:name, :href])
-      @results.categories.should == {"href"=>{"amazon"=>"1", "apple"=>"1"}}
+      @results.categories.should == {"href"=>{"amazon"=>1, "apple"=>1}}
     end
 
     it 'should find categories for query decent' do
       @results = Product.search_tank('decent', :snippets => [:description], :fetch => [:name, :href])
-      @results.categories.should == {"href"=>{"google"=>"2", "amazon"=>"2", "ebay"=>"1", "yahoo"=>"3"}}
+      @results.categories.should == {"href"=>{"google"=>2, "amazon"=>2, "ebay"=>1, "yahoo"=>3}}
     end
 
     it 'should apply actegory filters to search on products filtered by yahoo' do
@@ -289,8 +289,8 @@ describe 'An imaginary store' do
       @results = Product.search_tank('decent', :snippets => [:description], :fetch => [:name, :href], :category_filters => category_filters )
       @results.count.should == 3
     end
-  end 
-  
+  end
+
   describe 'on scope' do
     it 'should return amazon product only', :focus => true do
       results = Product.amazon.search_tank('decent')
@@ -299,4 +299,3 @@ describe 'An imaginary store' do
     end
   end
 end
-
