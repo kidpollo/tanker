@@ -40,7 +40,11 @@ RSpec::Core::RakeTask.new(:integration) do |t|
   t.rcov_opts = ['--exclude', 'spec']
 end
 
-require 'rake/rdoctask'
+begin
+  require 'rake/rdoctask'
+rescue
+  require 'rdoc/task'
+end
 Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
 
