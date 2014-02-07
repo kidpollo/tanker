@@ -144,7 +144,7 @@ describe Tanker do
       end
 
       dummy_instance = @dummy_class.new
-      dummy_instance.stub!(:id => 1)
+      dummy_instance.stub(:id => 1)
       dummy_instance.tanker_index_data[:something].should == "second"
     end
 
@@ -174,7 +174,7 @@ describe Tanker do
       end
 
       dummy_instance = @dummy_class.new
-      dummy_instance.stub!(:id => 1)
+      dummy_instance.stub(:id => 1)
       dummy_instance.tanker_index_data[:__type].should == 'MySpecialModel'
     end
 
@@ -433,7 +433,7 @@ describe Tanker do
           }]
         })
 
-      Foo::Bar.should_receive(:find_all_by_id).and_return([stub(:id => 42)])
+      Foo::Bar.should_receive(:find_all_by_id).and_return([double(:id => 42)])
 
       Foo::Bar.search_tank('bar')
     end
