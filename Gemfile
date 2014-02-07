@@ -1,19 +1,14 @@
-source "http://rubygems.org"
+source 'https://rubygems.org'
 
-gem 'json', '>= 1.5.1'
+gemspec
 
-group :test do 
-  gem 'rspec', '>= 2.5.0'
-  gem 'activerecord', '>= 3.0.7'
-  gem 'sqlite3'
-  #gem 'rcov'
-  #gem 'ruby-debug19'
-end
+gem 'sqlite3'
 
-group :development do
-  gem 'jeweler'
-  gem 'will_paginate', '>= 2.3.15'
-  gem 'kaminari'
-end
+gem 'will_paginate'
+gem 'kaminari'
 
+gem 'activerecord', '>= 4.0.0', '< 5.0.0'
+gem 'actionpack',   '>= 4.0.0', '< 5.0.0'
 
+gem 'rspec'
+gem 'simplecov', :require => false

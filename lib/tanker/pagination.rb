@@ -15,7 +15,7 @@ module Tanker
         raise(BadConfiguration, "Unknown pagination backend")
       end
     end
-    
+
     module Categories
       def categories
         @categories

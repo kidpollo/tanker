@@ -1,24 +1,10 @@
-begin
-  require "rubygems"
-  require "bundler"
-
-  Bundler.setup :default
-rescue => e
-  puts "Tanker: #{e.message}"
-end
 require 'indextank_client'
 require 'tanker/configuration'
 require 'tanker/utilities'
-
-if defined? Rails
-  begin
-    require 'tanker/railtie'
-  rescue LoadError
-  end
-end
+require 'tanker/version'
+require 'tanker/railtie' if defined?(Rails)
 
 module Tanker
-
   class NotConfigured < StandardError; end
   class BadConfiguration < StandardError; end
   class NoBlockGiven < StandardError; end
