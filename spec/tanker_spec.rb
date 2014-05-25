@@ -324,6 +324,48 @@ describe Tanker do
       collection.current_page.should == 1
     end
 
+    it 'should use the rails4 find_by finder method if available on model class' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+                          "docid"  => Person.new.it_doc_id,
+                          "name"   => 'pedro',
+                          "__type" => 'Person',
+                          "__id"   => '1'
+                        }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:where).and_return(
+        [Person.new]
+      )
+
+      Person.search_tank('hey!')
+    end
+
+    it 'should use find if neither where nor find_all_by_id are available on the model class' do
+      Person.tanker_index.should_receive(:search).and_return(
+        {
+          "matches" => 1,
+          "results" => [{
+                          "docid"  => Person.new.it_doc_id,
+                          "name"   => 'pedro',
+                          "__type" => 'Person',
+                          "__id"   => '1'
+                        }],
+          "search_time" => 1
+        }
+      )
+
+      Person.should_receive(:find).and_return(
+        [Person.new]
+      )
+
+      Person.search_tank('hey!')
+    end
+
     it 'should handle string and integer ids in search results' do
       Person.tanker_index.should_receive(:search).and_return(
         {

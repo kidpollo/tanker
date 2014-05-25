@@ -165,6 +165,8 @@ module Tanker
           klass_const = constantize(klass)
           if klass_const.respond_to?('find_all_by_id')
             id_map[klass] = klass_const.find_all_by_id(ids)
+          elsif klass_const.respond_to?('where')
+            id_map[klass] = klass_const.where(id: ids)
           else
             id_map[klass] = klass_const.find(ids)
           end
